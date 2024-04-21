@@ -1,0 +1,305 @@
+* Compiler related
+
+** what's happenning under the hood when running =hare build -o=?
+
+=Hare= doesn't have a pre-processor. The build process invokes (in order):
+
+=harec -> qbe ->  as ->  ld=.
+
+- =harec= compiles the source code into =QBE IR=
+- =qbe= (our compiler backend) turns the =QBE IR= into assembly
+
+If you're curious, you can use =-v= or =-vv= to make the build driver print the commands that it's running (you may want to clear the cache first with =hare cache -c=, so it actually runs all the commands).
+
+About the cache folder:
+
+- =$HOME/.cache/hare/usr/local/share/hare/stdlib=: For all =stdlib= cache
+- =$HOME/.cache/hare/{YOUR_PROJECT_PATH}/src/*.ha=: User source code
+
+
+*** Here is what happens when running =hare cache -c && hare run -vv src/main.ha=:
+
+#+BEGIN_SRC bash
+  #
+  # Clean cache done
+  #
+  /home/wison/.cache/hare (0 B)
+
+  #
+  # Generate QBE IR?
+  #
+  harec -N rt -M /usr/local/share/hare/stdlib/ -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/rt/ac636d595a4c4c35b5879eea490c383cea6f9ed336dc423e079ef39eb197ec88.ssa.tmp -t /home/wison/.cache/hare/usr/local/share/hare/stdlib/rt/ac636d595a4c4c35b5879eea490c383cea6f9ed336dc423e079ef39eb197ec88.ssa.td.tmp '/usr/local/share/hare/stdlib/rt/+freebsd/+x86_64.ha' /usr/local/share/hare/stdlib/rt/+freebsd/env.ha /usr/local/share/hare/stdlib/rt/+freebsd/errno.ha /usr/local/share/hare/stdlib/rt/+freebsd/initfini.ha '/usr/local/share/hare/stdlib/rt/+freebsd/platform_abort.ha' /usr/local/share/hare/stdlib/rt/+freebsd/platformstart-libc.ha /usr/local/share/hare/stdlib/rt/+freebsd/segmalloc.ha /usr/local/share/hare/stdlib/rt/+freebsd/signal.ha /usr/local/share/hare/stdlib/rt/+freebsd/socket.ha /usr/local/share/hare/stdlib/rt/+freebsd/start.ha /usr/local/share/hare/stdlib/rt/+freebsd/syscallno.ha /usr/local/share/hare/stdlib/rt/+freebsd/syscalls.ha /usr/local/share/hare/stdlib/rt/+freebsd/types.ha '/usr/local/share/hare/stdlib/rt/+x86_64/arch_jmp.ha' '/usr/local/share/hare/stdlib/rt/+x86_64/cpuid.ha' /usr/local/share/hare/stdlib/rt/abort.ha /usr/local/share/hare/stdlib/rt/ensure.ha '/usr/local/share/hare/stdlib/rt/fenv_defs.ha' /usr/local/share/hare/stdlib/rt/jmp.ha /usr/local/share/hare/stdlib/rt/malloc.ha /usr/local/share/hare/stdlib/rt/memcpy.ha '/usr/local/share/hare/stdlib/rt/memfunc_ptr.ha' /usr/local/share/hare/stdlib/rt/memmove.ha /usr/local/share/hare/stdlib/rt/memset.ha /usr/local/share/hare/stdlib/rt/strcmp.ha /usr/local/share/hare/stdlib/rt/u64tos.ha '/usr/local/share/hare/stdlib/rt/unknown_errno.ha'
+
+  harec -N types -M /usr/local/share/hare/stdlib/ -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/types/b4bf7b9e9ee2cdea2d3b33f51d902b680827e2ac35477eedf15e351d9d3df8cb.ssa.tmp -t /home/wison/.cache/hare/usr/local/share/hare/stdlib/types/b4bf7b9e9ee2cdea2d3b33f51d902b680827e2ac35477eedf15e351d9d3df8cb.ssa.td.tmp '/usr/local/share/hare/stdlib/types/arch+x86_64.ha' /usr/local/share/hare/stdlib/types/classes.ha /usr/local/share/hare/stdlib/types/limits.ha
+
+  harec -N encoding::utf8 -M /usr/local/share/hare/stdlib/ -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/encoding/utf8/a47de4d2df7931bc6c768f69632523aacf9c47540d589fe3a47b55aa167135d7.ssa.tmp -t /home/wison/.cache/hare/usr/local/share/hare/stdlib/encoding/utf8/a47de4d2df7931bc6c768f69632523aacf9c47540d589fe3a47b55aa167135d7.ssa.td.tmp /usr/local/share/hare/stdlib/encoding/utf8/decode.ha /usr/local/share/hare/stdlib/encoding/utf8/decodetable.ha /usr/local/share/hare/stdlib/encoding/utf8/encode.ha /usr/local/share/hare/stdlib/encoding/utf8/rune.ha /usr/local/share/hare/stdlib/encoding/utf8/types.ha
+
+  harec -N sort::cmp -M /usr/local/share/hare/stdlib/ -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/sort/cmp/06d1fd54f0c48d679d37badabaab49d5ac0a5a7c756a09fe8d178191e104189a.ssa.tmp -t /home/wison/.cache/hare/usr/local/share/hare/stdlib/sort/cmp/06d1fd54f0c48d679d37badabaab49d5ac0a5a7c756a09fe8d178191e104189a.ssa.td.tmp /usr/local/share/hare/stdlib/sort/cmp/cmp.ha
+
+  harec -N format::elf -M /usr/local/share/hare/stdlib/ -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/format/elf/ba768d19859b73cd8a3bcaa49843094cacbcbffca9aed787ec768e2ac1ce3516.ssa.tmp -t /home/wison/.cache/hare/usr/local/share/hare/stdlib/format/elf/ba768d19859b73cd8a3bcaa49843094cacbcbffca9aed787ec768e2ac1ce3516.ssa.td.tmp '/usr/local/share/hare/stdlib/format/elf/arch+x86_64.ha' /usr/local/share/hare/stdlib/format/elf/platform+freebsd.ha /usr/local/share/hare/stdlib/format/elf/types.ha
+
+  harec -N endian -M /usr/local/share/hare/stdlib/ -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/endian/b844eb2807a344cc8499d7fd17df2b69ef54e23fc29126a16255ce6fd95b7034.ssa.tmp -t /home/wison/.cache/hare/usr/local/share/hare/stdlib/endian/b844eb2807a344cc8499d7fd17df2b69ef54e23fc29126a16255ce6fd95b7034.ssa.td.tmp /usr/local/share/hare/stdlib/endian/big.ha /usr/local/share/hare/stdlib/endian/endian.ha '/usr/local/share/hare/stdlib/endian/host+x86_64.ha' /usr/local/share/hare/stdlib/endian/little.ha /usr/local/share/hare/stdlib/endian/network.ha
+
+  # HARE_TD_sort::cmp=/home/wison/.cache/hare/usr/local/share/hare/stdlib/sort/cmp/6ceb985a4f5a3e7ff30122b66c3a4d9f2ecec74332a741f21b3e12bb1551660d.td
+  qbe -t 'amd64_sysv' -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/sort/cmp/7e955071c082d36b4b642d47177c22d8449ea974b8aad21b53479cff554bacc7.s.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/sort/cmp/06d1fd54f0c48d679d37badabaab49d5ac0a5a7c756a09fe8d178191e104189a.ssa
+  # HARE_TD_types=/home/wison/.cache/hare/usr/local/share/hare/stdlib/types/2b71c26d530a4ee5021906b3e301bf6f261f548209e8ac4ae6f2317864808a41.td
+  qbe -t 'amd64_sysv' -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/types/9fc189ed0e1e51f5c53e3ca8e811c48cfb91b20b58bd7426bf2dd72b2f1aadd7.s.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/types/b4bf7b9e9ee2cdea2d3b33f51d902b680827e2ac35477eedf15e351d9d3df8cb.ssa
+  # HARE_TD_format::elf=/home/wison/.cache/hare/usr/local/share/hare/stdlib/format/elf/b4ef7a31fda549d069f68cdf557a3459ddabdcf38a904feff18334433fec9d26.td
+  qbe -t 'amd64_sysv' -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/format/elf/4b7475fe88117e3736812830a6fc7e37557b10d0fa7314bcad18a4952a520d15.s.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/format/elf/ba768d19859b73cd8a3bcaa49843094cacbcbffca9aed787ec768e2ac1ce3516.ssa
+  as -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/types/c2d6997aa7dcc50a2ab860804ef216b2c4ee7fd18cf83236088cef947f4b8c67.o.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/types/9fc189ed0e1e51f5c53e3ca8e811c48cfb91b20b58bd7426bf2dd72b2f1aadd7.s
+  # HARE_TD_endian=/home/wison/.cache/hare/usr/local/share/hare/stdlib/endian/8d17841dfbc10f6186b1d94d4924b3d95393dfb0ee2d383d5dda924c359f0e26.td
+  qbe -t 'amd64_sysv' -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/endian/059a58b620fa3952aa0b85c4d9ab63b57be719a66095db3d35a1671b226a295b.s.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/endian/b844eb2807a344cc8499d7fd17df2b69ef54e23fc29126a16255ce6fd95b7034.ssa
+  as -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/format/elf/c4959cc94d4fbc37042f789cabbc8a476f329bbed5a901108c05e3f12c66b0c6.o.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/format/elf/4b7475fe88117e3736812830a6fc7e37557b10d0fa7314bcad18a4952a520d15.s
+  as -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/sort/cmp/2fc42a8d5eb1ec179796912b8cf3e27051dbbfa298d4d8b300846173877cca6a.o.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/sort/cmp/7e955071c082d36b4b642d47177c22d8449ea974b8aad21b53479cff554bacc7.s
+  # HARE_TD_encoding::utf8=/home/wison/.cache/hare/usr/local/share/hare/stdlib/encoding/utf8/ba72e180ff5a4179756bc28a73b0987736c7ef7ce8e5701de907ce2d46fd6303.td
+  harec -N types::c -M /usr/local/share/hare/stdlib/ -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/types/c/14c016b58e3aa1ba9d2b20908dfbac653454042794a8779e40d8ca38fe9f3044.ssa.tmp -t /home/wison/.cache/hare/usr/local/share/hare/stdlib/types/c/14c016b58e3aa1ba9d2b20908dfbac653454042794a8779e40d8ca38fe9f3044.ssa.td.tmp '/usr/local/share/hare/stdlib/types/c/arch+x86_64.ha' /usr/local/share/hare/stdlib/types/c/strings.ha /usr/local/share/hare/stdlib/types/c/types.ha
+  qbe -t 'amd64_sysv' -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/encoding/utf8/4b5ea13135a6b66844289c4a43fe36e9852e74b82f11063aab0c8311d786640d.s.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/encoding/utf8/a47de4d2df7931bc6c768f69632523aacf9c47540d589fe3a47b55aa167135d7.ssa
+  # HARE_TD_types::c=/home/wison/.cache/hare/usr/local/share/hare/stdlib/types/c/5c13501a4617fd3ad3cff67215ec81870d11b2f34ceea251ba4301b0f030bef8.td
+  qbe -t 'amd64_sysv' -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/types/c/55022663110b7397bb5147c8534d610e3cb16167cc3cdd005fa08476156205bc.s.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/types/c/14c016b58e3aa1ba9d2b20908dfbac653454042794a8779e40d8ca38fe9f3044.ssa
+  as -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/endian/f4d09c7b5f62eaaa29e08bd6dc292ad78dbbbaec2a0420a540f089ed4aa3b971.o.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/endian/059a58b620fa3952aa0b85c4d9ab63b57be719a66095db3d35a1671b226a295b.s
+  as -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/encoding/utf8/757dc38f287ebc05f7599ec6af5f18bfcb89a7abd0191ca6800de6f7dac10aab.o.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/encoding/utf8/4b5ea13135a6b66844289c4a43fe36e9852e74b82f11063aab0c8311d786640d.s
+  as -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/types/c/f2b8bcca7e12bc630e90e014bd829aceea51af27dddcc086b0f3786395bcf286.o.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/types/c/55022663110b7397bb5147c8534d610e3cb16167cc3cdd005fa08476156205bc.s
+  # HARE_TD_rt=/home/wison/.cache/hare/usr/local/share/hare/stdlib/rt/b9b257c759ea1d74fa0e7b5b08f8140bfbca4ce1448e2fd94f0a4d4022e02ea0.td
+  harec -N bytes -M /usr/local/share/hare/stdlib/ -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/bytes/23f96797edfa922c22dab0af1416454b09b3a29862fbfc73a0f82c273c1fdfcc.ssa.tmp -t /home/wison/.cache/hare/usr/local/share/hare/stdlib/bytes/23f96797edfa922c22dab0af1416454b09b3a29862fbfc73a0f82c273c1fdfcc.ssa.td.tmp /usr/local/share/hare/stdlib/bytes/contains.ha /usr/local/share/hare/stdlib/bytes/equal.ha /usr/local/share/hare/stdlib/bytes/index.ha /usr/local/share/hare/stdlib/bytes/reverse.ha /usr/local/share/hare/stdlib/bytes/tokenize.ha /usr/local/share/hare/stdlib/bytes/trim.ha '/usr/local/share/hare/stdlib/bytes/two_way.ha' /usr/local/share/hare/stdlib/bytes/zero.ha
+  harec -N errors -M /usr/local/share/hare/stdlib/ -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/errors/21b534b6bb3338ff8ae86bba7aa468fab4dcff9f5e53aa8bc1236f5374b80582.ssa.tmp -t /home/wison/.cache/hare/usr/local/share/hare/stdlib/errors/21b534b6bb3338ff8ae86bba7aa468fab4dcff9f5e53aa8bc1236f5374b80582.ssa.td.tmp /usr/local/share/hare/stdlib/errors/common.ha /usr/local/share/hare/stdlib/errors/opaque.ha /usr/local/share/hare/stdlib/errors/rt.ha /usr/local/share/hare/stdlib/errors/string.ha
+  harec -N math -M /usr/local/share/hare/stdlib/ -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/math/4181a2577face65b4c1384030a58393fcb104da2ed083c00c65adc11d1d5363a.ssa.tmp -t /home/wison/.cache/hare/usr/local/share/hare/stdlib/math/4181a2577face65b4c1384030a58393fcb104da2ed083c00c65adc11d1d5363a.ssa.td.tmp '/usr/local/share/hare/stdlib/math/fenv+x86_64.ha' '/usr/local/share/hare/stdlib/math/fenv_func.ha' /usr/local/share/hare/stdlib/math/floats.ha /usr/local/share/hare/stdlib/math/ints.ha /usr/local/share/hare/stdlib/math/math.ha /usr/local/share/hare/stdlib/math/trig.ha /usr/local/share/hare/stdlib/math/uints.ha
+  qbe -t 'amd64_sysv' -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/rt/e216b41040a0cf9a065103c7a4b5d5bfa18a13779fce6caa6624ad00b70f687c.s.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/rt/ac636d595a4c4c35b5879eea490c383cea6f9ed336dc423e079ef39eb197ec88.ssa
+  # HARE_TD_errors=/home/wison/.cache/hare/usr/local/share/hare/stdlib/errors/7d7eb3162dbe8c2fae1f640febbf12dfe2f4ca8f02a537fcf383ca0456477c8b.td
+  qbe -t 'amd64_sysv' -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/errors/acbc16bae3adf5f185b8cc292348d37fec0b54e34dbc82b4f1b6082d6384fe13.s.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/errors/21b534b6bb3338ff8ae86bba7aa468fab4dcff9f5e53aa8bc1236f5374b80582.ssa
+  as -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/errors/0cc49abc526b637b1e7c51bba3555ee0440ea5130a2d179125c44ce4d9f3bd13.o.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/errors/acbc16bae3adf5f185b8cc292348d37fec0b54e34dbc82b4f1b6082d6384fe13.s
+  # HARE_TD_bytes=/home/wison/.cache/hare/usr/local/share/hare/stdlib/bytes/b04e19818c3ef1d821f5fdf0f3196024dd7ffa1a9e1bf42989758f6b6db97c10.td
+  harec -N io -M /usr/local/share/hare/stdlib/ -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/io/2aedd3c0160c8017b59265ca6c57dcfc3b9539fbc6a96c5cfac3e37ec02e8724.ssa.tmp -t /home/wison/.cache/hare/usr/local/share/hare/stdlib/io/2aedd3c0160c8017b59265ca6c57dcfc3b9539fbc6a96c5cfac3e37ec02e8724.ssa.td.tmp /usr/local/share/hare/stdlib/io/+freebsd/dup.ha /usr/local/share/hare/stdlib/io/+freebsd/mmap.ha '/usr/local/share/hare/stdlib/io/+freebsd/platform_file.ha' /usr/local/share/hare/stdlib/io/+freebsd/vector.ha '/usr/local/share/hare/stdlib/io/arch+x86_64.ha' /usr/local/share/hare/stdlib/io/copy.ha /usr/local/share/hare/stdlib/io/drain.ha /usr/local/share/hare/stdlib/io/empty.ha /usr/local/share/hare/stdlib/io/file.ha /usr/local/share/hare/stdlib/io/handle.ha /usr/local/share/hare/stdlib/io/limit.ha /usr/local/share/hare/stdlib/io/stream.ha /usr/local/share/hare/stdlib/io/tee.ha /usr/local/share/hare/stdlib/io/types.ha /usr/local/share/hare/stdlib/io/util.ha /usr/local/share/hare/stdlib/io/zero.ha
+  harec -N strings -M /usr/local/share/hare/stdlib/ -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/strings/d994f8faacafdffaec4de005eec21b65f4659162144bca8709dedd90d1836f70.ssa.tmp -t /home/wison/.cache/hare/usr/local/share/hare/stdlib/strings/d994f8faacafdffaec4de005eec21b65f4659162144bca8709dedd90d1836f70.ssa.td.tmp /usr/local/share/hare/stdlib/strings/compare.ha /usr/local/share/hare/stdlib/strings/concat.ha /usr/local/share/hare/stdlib/strings/contains.ha /usr/local/share/hare/stdlib/strings/dup.ha /usr/local/share/hare/stdlib/strings/index.ha /usr/local/share/hare/stdlib/strings/iter.ha /usr/local/share/hare/stdlib/strings/pad.ha /usr/local/share/hare/stdlib/strings/replace.ha /usr/local/share/hare/stdlib/strings/runes.ha /usr/local/share/hare/stdlib/strings/sub.ha /usr/local/share/hare/stdlib/strings/suffix.ha /usr/local/share/hare/stdlib/strings/tokenize.ha /usr/local/share/hare/stdlib/strings/trim.ha /usr/local/share/hare/stdlib/strings/utf8.ha
+  qbe -t 'amd64_sysv' -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/bytes/425707dc240cbfad9dd4609ea9c1247cf8a53eda0218b3c1f5e744c3bc693f3b.s.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/bytes/23f96797edfa922c22dab0af1416454b09b3a29862fbfc73a0f82c273c1fdfcc.ssa
+  as -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/bytes/d9a81ca3bb30331fa509d6a1ceb27d9c0b4c3ffad3932c80d7b3e616561bb75b.o.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/bytes/425707dc240cbfad9dd4609ea9c1247cf8a53eda0218b3c1f5e744c3bc693f3b.s
+  # HARE_TD_math=/home/wison/.cache/hare/usr/local/share/hare/stdlib/math/f5f59a62f87901d90216e5af146f72977ecc1d9eafe47ad28935a1b36d5629f1.td
+  harec -N time -M /usr/local/share/hare/stdlib/ -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/time/3c8e1d5f034027fad69a562a404820966f2f519cfe5c85e9d130fbbd569a16ea.ssa.tmp -t /home/wison/.cache/hare/usr/local/share/hare/stdlib/time/3c8e1d5f034027fad69a562a404820966f2f519cfe5c85e9d130fbbd569a16ea.ssa.td.tmp /usr/local/share/hare/stdlib/time/+freebsd/functions.ha /usr/local/share/hare/stdlib/time/arithm.ha /usr/local/share/hare/stdlib/time/conv.ha /usr/local/share/hare/stdlib/time/types.ha
+  harec -N sort -M /usr/local/share/hare/stdlib/ -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/sort/e26c3280b6f9f5116dac81c61ea23499b053953d09782aafa4885f23a700a00a.ssa.tmp -t /home/wison/.cache/hare/usr/local/share/hare/stdlib/sort/e26c3280b6f9f5116dac81c61ea23499b053953d09782aafa4885f23a700a00a.ssa.td.tmp /usr/local/share/hare/stdlib/sort/bisect.ha /usr/local/share/hare/stdlib/sort/search.ha /usr/local/share/hare/stdlib/sort/sort.ha /usr/local/share/hare/stdlib/sort/types.ha
+  qbe -t 'amd64_sysv' -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/math/4770b69853aeb6adb64333c527c89a9b492412088a8bdaaa59bffbb48588b820.s.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/math/4181a2577face65b4c1384030a58393fcb104da2ed083c00c65adc11d1d5363a.ssa
+  # HARE_TD_strings=/home/wison/.cache/hare/usr/local/share/hare/stdlib/strings/224893b6bb32ead5f28f46fae524c5e9553ccf5bb3444adab1456feca1842c31.td
+  harec -N path -M /usr/local/share/hare/stdlib/ -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/path/1a7c7af715f850a18032318988e5448576bebe8d07ed0539c58007320ae5ec4e.ssa.tmp -t /home/wison/.cache/hare/usr/local/share/hare/stdlib/path/1a7c7af715f850a18032318988e5448576bebe8d07ed0539c58007320ae5ec4e.ssa.td.tmp /usr/local/share/hare/stdlib/path/+freebsd.ha /usr/local/share/hare/stdlib/path/buffer.ha /usr/local/share/hare/stdlib/path/error.ha '/usr/local/share/hare/stdlib/path/ext_stack.ha' /usr/local/share/hare/stdlib/path/iter.ha /usr/local/share/hare/stdlib/path/posix.ha /usr/local/share/hare/stdlib/path/prefix.ha /usr/local/share/hare/stdlib/path/stack.ha
+  harec -N ascii -M /usr/local/share/hare/stdlib/ -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/ascii/04685916d4bf3c9dd46d8a7bc96476fb163b7d106ad7d34dba4e55211ba5814a.ssa.tmp -t /home/wison/.cache/hare/usr/local/share/hare/stdlib/ascii/04685916d4bf3c9dd46d8a7bc96476fb163b7d106ad7d34dba4e55211ba5814a.ssa.td.tmp /usr/local/share/hare/stdlib/ascii/ctype.ha /usr/local/share/hare/stdlib/ascii/string.ha /usr/local/share/hare/stdlib/ascii/valid.ha
+  qbe -t 'amd64_sysv' -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/strings/171c291d1bf2351b2e1762a02d93e24e1f990052178f5795b809dd6746124fb7.s.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/strings/d994f8faacafdffaec4de005eec21b65f4659162144bca8709dedd90d1836f70.ssa
+  # HARE_TD_io=/home/wison/.cache/hare/usr/local/share/hare/stdlib/io/185c1968abd2459a32a54d7ff485545e15f4fb326f008dda3f19ce6f6d98f999.td
+  harec -N bufio -M /usr/local/share/hare/stdlib/ -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/bufio/4d79653b9d7521dcce596b5558bc7320b57ad0cfedc70164d9c4366a58ae5547.ssa.tmp -t /home/wison/.cache/hare/usr/local/share/hare/stdlib/bufio/4d79653b9d7521dcce596b5558bc7320b57ad0cfedc70164d9c4366a58ae5547.ssa.td.tmp /usr/local/share/hare/stdlib/bufio/scanner.ha /usr/local/share/hare/stdlib/bufio/stream.ha
+  harec -N memio -M /usr/local/share/hare/stdlib/ -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/memio/b63f3aff455e8c37e7447416c82232b9e40aac52dd72004c5d56c6d5aa1f0dbf.ssa.tmp -t /home/wison/.cache/hare/usr/local/share/hare/stdlib/memio/b63f3aff455e8c37e7447416c82232b9e40aac52dd72004c5d56c6d5aa1f0dbf.ssa.td.tmp /usr/local/share/hare/stdlib/memio/ops.ha /usr/local/share/hare/stdlib/memio/stream.ha
+  harec -N unix::signal -M /usr/local/share/hare/stdlib/ -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/unix/signal/2d4e20ad0002bc21286a050bee92dac7029347528864b77635d9f7c0d68b8f82.ssa.tmp -t /home/wison/.cache/hare/usr/local/share/hare/stdlib/unix/signal/2d4e20ad0002bc21286a050bee92dac7029347528864b77635d9f7c0d68b8f82.ssa.td.tmp /usr/local/share/hare/stdlib/unix/signal/+freebsd.ha /usr/local/share/hare/stdlib/unix/signal/types.ha
+  qbe -t 'amd64_sysv' -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/io/604577e5838a32a75e5d85c17ae34f34eb7b2d7ba7ecd359dc6355090246aca7.s.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/io/2aedd3c0160c8017b59265ca6c57dcfc3b9539fbc6a96c5cfac3e37ec02e8724.ssa
+  # HARE_TD_time=/home/wison/.cache/hare/usr/local/share/hare/stdlib/time/878bb2113778db0324503662de6686d2cd8d3c8b591b7827823fc131ea6a09f6.td
+  qbe -t 'amd64_sysv' -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/time/c33768094c2f5f2ba44bbd8d8c50df51ff3689779cc37108122b28b0338110e9.s.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/time/3c8e1d5f034027fad69a562a404820966f2f519cfe5c85e9d130fbbd569a16ea.ssa
+  # HARE_TD_sort=/home/wison/.cache/hare/usr/local/share/hare/stdlib/sort/49ecaec0258261ab86c8e7a3264d7f9e54a91212bf0e7f545acbfef38028f847.td
+  qbe -t 'amd64_sysv' -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/sort/dd7d151689b7f84fd5156fe16585a5defff74dbc2145b1721826e5d756dc8640.s.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/sort/e26c3280b6f9f5116dac81c61ea23499b053953d09782aafa4885f23a700a00a.ssa
+  # HARE_TD_ascii=/home/wison/.cache/hare/usr/local/share/hare/stdlib/ascii/aedeb4fc8f24fd50677be3a94ba4adb5999d831a5c4312a6c5d0f5e8e363254f.td
+  qbe -t 'amd64_sysv' -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/ascii/2c7d768fbe3631da22f6f2c7cda6b92b0ae0a02a475bfffd45aece95eec39946.s.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/ascii/04685916d4bf3c9dd46d8a7bc96476fb163b7d106ad7d34dba4e55211ba5814a.ssa
+  as -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/time/06e2610be5c7592d616b1a82703f06f02cf26d2b5aec05681c1f4a74ebc06cdd.o.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/time/c33768094c2f5f2ba44bbd8d8c50df51ff3689779cc37108122b28b0338110e9.s
+  # HARE_TD_unix::signal=/home/wison/.cache/hare/usr/local/share/hare/stdlib/unix/signal/ae9c45d936332bb2d13d2ea758ca6ea5abc963eae65b6d24c024200469b1e03d.td
+  qbe -t 'amd64_sysv' -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/unix/signal/b1fcd766c5ef91c04b4eb44bc90d194bb37ecef063843e9ed8ba45d2ce0964f9.s.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/unix/signal/2d4e20ad0002bc21286a050bee92dac7029347528864b77635d9f7c0d68b8f82.ssa
+  as -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/ascii/4cf5a97b38e67b12ce9386d839012c4a264dd10a43d866e2463fd316330de291.o.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/ascii/2c7d768fbe3631da22f6f2c7cda6b92b0ae0a02a475bfffd45aece95eec39946.s
+  as -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/rt/ce9064d31c9d7cf716c9b9f03dbb90ab69be4cdd5739def202d9c658826d3bb6.o.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/rt/e216b41040a0cf9a065103c7a4b5d5bfa18a13779fce6caa6624ad00b70f687c.s '/usr/local/share/hare/stdlib/rt/+freebsd/start+x86_64-libc.s' '/usr/local/share/hare/stdlib/rt/+freebsd/syscall+x86_64.s' '/usr/local/share/hare/stdlib/rt/+x86_64/cpuid.s' '/usr/local/share/hare/stdlib/rt/+x86_64/fenv.s' '/usr/local/share/hare/stdlib/rt/+x86_64/longjmp.s' '/usr/local/share/hare/stdlib/rt/+x86_64/setjmp.s'
+  as -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/unix/signal/492c833e1c360084e78ce887cf45995fe5cd5e32d9bbf776a4c3a64d6d8847b5.o.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/unix/signal/b1fcd766c5ef91c04b4eb44bc90d194bb37ecef063843e9ed8ba45d2ce0964f9.s
+  as -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/io/7173fdd45e1d69e436c8ecae9401d155f6f19bc5dd79d0e631ba7487bd5c44c7.o.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/io/604577e5838a32a75e5d85c17ae34f34eb7b2d7ba7ecd359dc6355090246aca7.s
+  # HARE_TD_path=/home/wison/.cache/hare/usr/local/share/hare/stdlib/path/5300fc5bb064cf666fc36346f3a669f388adab53e8fa95cd7d8f7b52da91b097.td
+  harec -N fs -M /usr/local/share/hare/stdlib/ -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/fs/354db7b0e9eeb627013ca1c8d6e439611058534bdd0bc8a6acfd3db401908736.ssa.tmp -t /home/wison/.cache/hare/usr/local/share/hare/stdlib/fs/354db7b0e9eeb627013ca1c8d6e439611058534bdd0bc8a6acfd3db401908736.ssa.td.tmp /usr/local/share/hare/stdlib/fs/fs.ha /usr/local/share/hare/stdlib/fs/types.ha /usr/local/share/hare/stdlib/fs/util.ha
+  qbe -t 'amd64_sysv' -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/path/9c8a2b26526e7096be0ac1423d2ec145cc0e787eb3d5f105af8b2fac7bee8444.s.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/path/1a7c7af715f850a18032318988e5448576bebe8d07ed0539c58007320ae5ec4e.ssa
+  as -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/sort/7cb390a0370000313d5a8eacb5ef54322de1035d8ee553221f29c6945091587f.o.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/sort/dd7d151689b7f84fd5156fe16585a5defff74dbc2145b1721826e5d756dc8640.s
+  # HARE_TD_memio=/home/wison/.cache/hare/usr/local/share/hare/stdlib/memio/431b5cf0ed66c5e8131477da06176aa7ffffc604abe6ad7b191b7db20483fd79.td
+  harec -N strconv -M /usr/local/share/hare/stdlib/ -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/strconv/4feff6372f009fb474cdc6b6aadc0bf4af349523061591ded8bedaaba9475f17.ssa.tmp -t /home/wison/.cache/hare/usr/local/share/hare/stdlib/strconv/4feff6372f009fb474cdc6b6aadc0bf4af349523061591ded8bedaaba9475f17.ssa.td.tmp /usr/local/share/hare/stdlib/strconv/ftos.ha '/usr/local/share/hare/stdlib/strconv/ftos_multiprecision.ha' '/usr/local/share/hare/stdlib/strconv/ftos_ryu.ha' /usr/local/share/hare/stdlib/strconv/itos.ha /usr/local/share/hare/stdlib/strconv/numeric.ha /usr/local/share/hare/stdlib/strconv/stof.ha '/usr/local/share/hare/stdlib/strconv/stof_data.ha' /usr/local/share/hare/stdlib/strconv/stoi.ha /usr/local/share/hare/stdlib/strconv/stou.ha /usr/local/share/hare/stdlib/strconv/types.ha /usr/local/share/hare/stdlib/strconv/utos.ha
+  qbe -t 'amd64_sysv' -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/memio/4ee20517f9aa49f70e5dd609c38f4ebdb7d90cab4961ba19d68a8a51f040d72a.s.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/memio/b63f3aff455e8c37e7447416c82232b9e40aac52dd72004c5d56c6d5aa1f0dbf.ssa
+  # HARE_TD_bufio=/home/wison/.cache/hare/usr/local/share/hare/stdlib/bufio/c9442eae65748425511f042a6b1ae65657bd425880294f04e4862432d7ab6544.td
+  qbe -t 'amd64_sysv' -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/bufio/b7ff761785780995d1910b73ddf2669f9e06f3d620b68edd5b3c4d83456ff6ee.s.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/bufio/4d79653b9d7521dcce596b5558bc7320b57ad0cfedc70164d9c4366a58ae5547.ssa
+  as -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/strings/8c076dfaefa01bdd4c71b38a8c4fede7051a986e7f461d51bd9e48cf3d6f6fb3.o.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/strings/171c291d1bf2351b2e1762a02d93e24e1f990052178f5795b809dd6746124fb7.s
+  as -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/math/7c48efc6b5e79e829a8cb4e22cc35e20f2dd2d150649279e6c14b969dde666cb.o.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/math/4770b69853aeb6adb64333c527c89a9b492412088a8bdaaa59bffbb48588b820.s
+  as -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/memio/1676a72d36714d38d49032df33a8039d858b299f83446977ab1f0661166c28f4.o.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/memio/4ee20517f9aa49f70e5dd609c38f4ebdb7d90cab4961ba19d68a8a51f040d72a.s
+  as -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/bufio/0b73121ff94c2624935db877b3529be94491c82a592984cafccfbbfe6f12879d.o.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/bufio/b7ff761785780995d1910b73ddf2669f9e06f3d620b68edd5b3c4d83456ff6ee.s
+  as -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/path/e46043bcc2723b2bb6f22ffada0245f3d8c5768a22029b71f2993cdd26db95e2.o.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/path/9c8a2b26526e7096be0ac1423d2ec145cc0e787eb3d5f105af8b2fac7bee8444.s
+  # HARE_TD_fs=/home/wison/.cache/hare/usr/local/share/hare/stdlib/fs/4bb118f154db4c67801f7b44db7d7c6a616d02bdf94b7f2f46d52a7016ea5a4e.td
+  harec -N os -M /usr/local/share/hare/stdlib/ -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/os/2f6839fcaf4d4584ec49ba249094b640489801bbd809a6d5cbc1dd2b0b10c6db.ssa.tmp -t /home/wison/.cache/hare/usr/local/share/hare/stdlib/os/2f6839fcaf4d4584ec49ba249094b640489801bbd809a6d5cbc1dd2b0b10c6db.ssa.td.tmp /usr/local/share/hare/stdlib/os/+freebsd/dirfdfs.ha /usr/local/share/hare/stdlib/os/+freebsd/exit.ha /usr/local/share/hare/stdlib/os/+freebsd/fs.ha '/usr/local/share/hare/stdlib/os/+freebsd/platform_environ.ha' /usr/local/share/hare/stdlib/os/+freebsd/status.ha /usr/local/share/hare/stdlib/os/+freebsd/stdfd.ha /usr/local/share/hare/stdlib/os/environ.ha /usr/local/share/hare/stdlib/os/os.ha
+  harec -N unix -M /usr/local/share/hare/stdlib/ -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/unix/771cd36f5b97649d65b76787fef7ec6f2ad9ea69e9e4460725db293869c47a9a.ssa.tmp -t /home/wison/.cache/hare/usr/local/share/hare/stdlib/unix/771cd36f5b97649d65b76787fef7ec6f2ad9ea69e9e4460725db293869c47a9a.ssa.td.tmp /usr/local/share/hare/stdlib/unix/+freebsd/getpid.ha /usr/local/share/hare/stdlib/unix/+freebsd/getuid.ha /usr/local/share/hare/stdlib/unix/+freebsd/groups.ha /usr/local/share/hare/stdlib/unix/+freebsd/nice.ha /usr/local/share/hare/stdlib/unix/+freebsd/pipe.ha /usr/local/share/hare/stdlib/unix/+freebsd/setuid.ha /usr/local/share/hare/stdlib/unix/+freebsd/umask.ha
+  qbe -t 'amd64_sysv' -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/fs/299d1fe3c45f1d650d866f918fa7fb1f6b4cf92c5b473ce08aa11f9d1e27a852.s.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/fs/354db7b0e9eeb627013ca1c8d6e439611058534bdd0bc8a6acfd3db401908736.ssa
+  # HARE_TD_strconv=/home/wison/.cache/hare/usr/local/share/hare/stdlib/strconv/878b6c4addafddba9d47303b093cee7025c6e72fd25e8960579dc01232de348e.td
+  qbe -t 'amd64_sysv' -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/strconv/f23ed210dc820cc7c9a82e70c3a35841a87d07f39422bc8b0b189e41ef53d605.s.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/strconv/4feff6372f009fb474cdc6b6aadc0bf4af349523061591ded8bedaaba9475f17.ssa
+  as -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/fs/4ab88277f95c85c825c521e108bb9658b4b0dc86021498e848e04e528071b017.o.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/fs/299d1fe3c45f1d650d866f918fa7fb1f6b4cf92c5b473ce08aa11f9d1e27a852.s
+  # HARE_TD_unix=/home/wison/.cache/hare/usr/local/share/hare/stdlib/unix/cb482256b365f68896300560683c89bfc5701509c180f00d236b126d03158f5c.td
+  qbe -t 'amd64_sysv' -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/unix/b5367cab44cc25beb8a86e0349328d1af1ade76c38cc7c20e03632499ad16c03.s.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/unix/771cd36f5b97649d65b76787fef7ec6f2ad9ea69e9e4460725db293869c47a9a.ssa
+  as -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/unix/b4acc4b28ebd1d55305bb206358a4b373c3c7be6038ad7e7046eecd5013cd1a1.o.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/unix/b5367cab44cc25beb8a86e0349328d1af1ade76c38cc7c20e03632499ad16c03.s
+  # HARE_TD_os=/home/wison/.cache/hare/usr/local/share/hare/stdlib/os/0dfc1fd334e29e6338096fbb58f1c4b46a7878c6dbe9ce69ddbb33d90c5c689e.td
+  harec -N fmt -M /usr/local/share/hare/stdlib/ -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/fmt/80393ee856fd7ba8665cf333940ea959ec5e4429a2922301187bf34c63112676.ssa.tmp -t /home/wison/.cache/hare/usr/local/share/hare/stdlib/fmt/80393ee856fd7ba8665cf333940ea959ec5e4429a2922301187bf34c63112676.ssa.td.tmp /usr/local/share/hare/stdlib/fmt/iter.ha /usr/local/share/hare/stdlib/fmt/print.ha /usr/local/share/hare/stdlib/fmt/wrappers.ha
+  qbe -t 'amd64_sysv' -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/os/8ba602fd09b59b0fcdd2cbbaddfb2d5e0fd708744fcc435f5bb4dee81dec8c15.s.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/os/2f6839fcaf4d4584ec49ba249094b640489801bbd809a6d5cbc1dd2b0b10c6db.ssa
+  # HARE_TD_fmt=/home/wison/.cache/hare/usr/local/share/hare/stdlib/fmt/60d472e1243334af6cf3c4165412b40e1f8ae51d534ef26a4f19624efa4c22a1.td
+  harec -N os::exec -M /usr/local/share/hare/stdlib/ -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/os/exec/af573662886b37bdedceca174e27a7e8ed1457f8cee526554a7eefd13a56efb4.ssa.tmp -t /home/wison/.cache/hare/usr/local/share/hare/stdlib/os/exec/af573662886b37bdedceca174e27a7e8ed1457f8cee526554a7eefd13a56efb4.ssa.td.tmp /usr/local/share/hare/stdlib/os/exec/+freebsd/exec.ha '/usr/local/share/hare/stdlib/os/exec/+freebsd/platform_cmd.ha' /usr/local/share/hare/stdlib/os/exec/+freebsd/process.ha /usr/local/share/hare/stdlib/os/exec/cmd.ha /usr/local/share/hare/stdlib/os/exec/types.ha
+  harec -N encoding::hex -M /usr/local/share/hare/stdlib/ -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/encoding/hex/32272a301c48381bae6b4bc0c76709c02c80d9d5a43e9276d2d8c027fb409050.ssa.tmp -t /home/wison/.cache/hare/usr/local/share/hare/stdlib/encoding/hex/32272a301c48381bae6b4bc0c76709c02c80d9d5a43e9276d2d8c027fb409050.ssa.td.tmp /usr/local/share/hare/stdlib/encoding/hex/hex.ha
+
+  #
+  # `src/main.ha` to QBE IR?
+  #
+  harec -M /home/wison/hare/temp/src/main.ha/ -o /home/wison/.cache/hare/home/wison/hare/temp/src/main.ha/0ec3e6174c912755d4d7ae28845cba06f679d71d83d6dc0ffe008b6ecf556afb.ssa.tmp -t /home/wison/.cache/hare/home/wison/hare/temp/src/main.ha/0ec3e6174c912755d4d7ae28845cba06f679d71d83d6dc0ffe008b6ecf556afb.ssa.td.tmp /home/wison/hare/temp/src/main.ha
+
+  qbe -t 'amd64_sysv' -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/fmt/37f668aca735b0b090b7848e3ba7b8a9a3046c6359087d38c3e63ba1b3e83e38.s.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/fmt/80393ee856fd7ba8665cf333940ea959ec5e4429a2922301187bf34c63112676.ssa
+  as -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/os/d61d73bbf58b5b1fcbc1ae077e039b36e50f1b56d3f3e848f6d302675d4a1fbd.o.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/os/8ba602fd09b59b0fcdd2cbbaddfb2d5e0fd708744fcc435f5bb4dee81dec8c15.s
+  as -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/fmt/6bb1e9d8d07b8a8ba37e30b0d39117fc2287c7fe32cdf745016f1e94eb5da923.o.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/fmt/37f668aca735b0b090b7848e3ba7b8a9a3046c6359087d38c3e63ba1b3e83e38.s
+
+  # HARE_TD_=/home/wison/.cache/hare/home/wison/hare/temp/src/main.ha/6caa6d8dd4d8d9fcb6e47a54bc0a25b6fb88276c8ce8f3e2e787c2252638e7dc.td
+  qbe -t 'amd64_sysv' -o /home/wison/.cache/hare/home/wison/hare/temp/src/main.ha/2a6b323afc6f797801ee2479999766e82ba579fc554cee21929dca4008d080c7.s.tmp /home/wison/.cache/hare/home/wison/hare/temp/src/main.ha/0ec3e6174c912755d4d7ae28845cba06f679d71d83d6dc0ffe008b6ecf556afb.ssa
+
+  #
+  # Generate `src/main.ha` to assembly
+  #
+  as -o /home/wison/.cache/hare/home/wison/hare/temp/src/main.ha/d75a4d789c926abb3e8b83fdf1326102ced84c29a8fd8e29a5a95379740be35b.o.tmp /home/wison/.cache/hare/home/wison/hare/temp/src/main.ha/2a6b323afc6f797801ee2479999766e82ba579fc554cee21929dca4008d080c7.s
+
+  # HARE_TD_encoding::hex=/home/wison/.cache/hare/usr/local/share/hare/stdlib/encoding/hex/99fb43453bcf137b2062cd4bd54cc36a20ef45e8f26c18f16b1acb3e655dfd5a.td
+  qbe -t 'amd64_sysv' -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/encoding/hex/d2282b80291ad69ab37df835a878f9b95a4b8d59c2fcf679c42720bde5cac457.s.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/encoding/hex/32272a301c48381bae6b4bc0c76709c02c80d9d5a43e9276d2d8c027fb409050.ssa
+  as -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/strconv/5536f6b717cc7930202649aa6d5a95b5b328bdbe0d65e624e9d4969c2492fa95.o.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/strconv/f23ed210dc820cc7c9a82e70c3a35841a87d07f39422bc8b0b189e41ef53d605.s
+  as -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/encoding/hex/eea93f2b1dfa2e90365bc494aed7412938c2adc64f7093bf01ba94671fa22fff.o.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/encoding/hex/d2282b80291ad69ab37df835a878f9b95a4b8d59c2fcf679c42720bde5cac457.s
+  # HARE_TD_os::exec=/home/wison/.cache/hare/usr/local/share/hare/stdlib/os/exec/0e889796aea9556c7eeb03f4b461ec8b63f31d13733f7e4c81c8b6a723f2c4b8.td
+  harec -N debug::image -M /usr/local/share/hare/stdlib/ -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/debug/image/8cfdcaafbe501165a4b3598564fd7106c5eef743957d1afa575e7aadf1d497eb.ssa.tmp -t /home/wison/.cache/hare/usr/local/share/hare/stdlib/debug/image/8cfdcaafbe501165a4b3598564fd7106c5eef743957d1afa575e7aadf1d497eb.ssa.td.tmp /usr/local/share/hare/stdlib/debug/image/open.ha /usr/local/share/hare/stdlib/debug/image/sections.ha /usr/local/share/hare/stdlib/debug/image/self+freebsd.ha '/usr/local/share/hare/stdlib/debug/image/self_argv.ha'
+  qbe -t 'amd64_sysv' -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/os/exec/b4933954ee80814eeae8a7458ff85159df05f6e22446c5f435d3429cde34df70.s.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/os/exec/af573662886b37bdedceca174e27a7e8ed1457f8cee526554a7eefd13a56efb4.ssa
+  as -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/os/exec/bdb158d81dcd1788ee5b50ded0d7838995e89b30cbc407c0ee5a16b6b7fc0183.o.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/os/exec/b4933954ee80814eeae8a7458ff85159df05f6e22446c5f435d3429cde34df70.s
+  # HARE_TD_debug::image=/home/wison/.cache/hare/usr/local/share/hare/stdlib/debug/image/ed843c9c40cfb0bbb3e5cdbed735c6cde72033553bed8d67a97d40dde51e1561.td
+  harec -N debug::dwarf -M /usr/local/share/hare/stdlib/ -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/debug/dwarf/2c93495e5e4180b36a8cf46b4cf5c6a33861a9ef775d50da02a6f34bcae73a0c.ssa.tmp -t /home/wison/.cache/hare/usr/local/share/hare/stdlib/debug/dwarf/2c93495e5e4180b36a8cf46b4cf5c6a33861a9ef775d50da02a6f34bcae73a0c.ssa.td.tmp /usr/local/share/hare/stdlib/debug/dwarf/abbrev.ha '/usr/local/share/hare/stdlib/debug/dwarf/addr_to_line.ha' /usr/local/share/hare/stdlib/debug/dwarf/aranges.ha /usr/local/share/hare/stdlib/debug/dwarf/constant.ha /usr/local/share/hare/stdlib/debug/dwarf/info.ha /usr/local/share/hare/stdlib/debug/dwarf/line.ha /usr/local/share/hare/stdlib/debug/dwarf/reader.ha /usr/local/share/hare/stdlib/debug/dwarf/strings.ha
+  qbe -t 'amd64_sysv' -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/debug/image/38b3ea4c8658edc4edc8dbdc58ab9312530639f7184166aaf64aa37423607147.s.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/debug/image/8cfdcaafbe501165a4b3598564fd7106c5eef743957d1afa575e7aadf1d497eb.ssa
+  as -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/debug/image/042d48ba32e113fc9a220e195ebaddc4301f149fc0ffbc46dfdc6ea86a41bcf3.o.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/debug/image/38b3ea4c8658edc4edc8dbdc58ab9312530639f7184166aaf64aa37423607147.s
+  # HARE_TD_debug::dwarf=/home/wison/.cache/hare/usr/local/share/hare/stdlib/debug/dwarf/b6f0331a1c959011e430fcdd6ae0a41326c77664c4c08650f74a4696ac9d1f9c.td
+  harec -N debug -M /usr/local/share/hare/stdlib/ -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/debug/f5b633fa51d3c5146a90ee8b550bc243ab0d270c372f1ca6f4c0a274d3101ab9.ssa.tmp -t /home/wison/.cache/hare/usr/local/share/hare/stdlib/debug/f5b633fa51d3c5146a90ee8b550bc243ab0d270c372f1ca6f4c0a274d3101ab9.ssa.td.tmp '/usr/local/share/hare/stdlib/debug/+freebsd/+x86_64/ucontext.ha' /usr/local/share/hare/stdlib/debug/+freebsd/translate.ha '/usr/local/share/hare/stdlib/debug/+x86_64/walk.ha' /usr/local/share/hare/stdlib/debug/abort.ha /usr/local/share/hare/stdlib/debug/backtrace.ha /usr/local/share/hare/stdlib/debug/constants.ha /usr/local/share/hare/stdlib/debug/fault.ha /usr/local/share/hare/stdlib/debug/ident.ha /usr/local/share/hare/stdlib/debug/symbols.ha
+  qbe -t 'amd64_sysv' -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/debug/dwarf/be89369ad3afb6021db6c03c8438fd489f6dc735a930b7ee0ca261ad42470944.s.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/debug/dwarf/2c93495e5e4180b36a8cf46b4cf5c6a33861a9ef775d50da02a6f34bcae73a0c.ssa
+  # HARE_TD_debug=/home/wison/.cache/hare/usr/local/share/hare/stdlib/debug/ae31731d9b6cfdf0b467c6bc7c5cacd900374d9d8fe89c975037da9593c8f3f1.td
+  qbe -t 'amd64_sysv' -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/debug/683d35d146ce31d20005fdd24ec4d2cd3393feb4ab8a228d6c1a4bde454339ea.s.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/debug/f5b633fa51d3c5146a90ee8b550bc243ab0d270c372f1ca6f4c0a274d3101ab9.ssa
+
+  as -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/debug/dwarf/6e2d07e4fcb9592f0b3929f0e4d5b53a78796a514767e4485419dad2b9e9e616.o.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/debug/dwarf/be89369ad3afb6021db6c03c8438fd489f6dc735a930b7ee0ca261ad42470944.s
+  as -o /home/wison/.cache/hare/usr/local/share/hare/stdlib/debug/0cd5d3fe4869643c31774660d322adfe985067d8eb293c1eb0638955828b8037.o.tmp /home/wison/.cache/hare/usr/local/share/hare/stdlib/debug/683d35d146ce31d20005fdd24ec4d2cd3393feb4ab8a228d6c1a4bde454339ea.s '/usr/local/share/hare/stdlib/debug/+x86_64/getfp.s' /usr/local/share/hare/stdlib/debug/altstack.s
+
+  #
+  # Link stage
+  #
+  ld --gc-sections -z noexecstack -o /home/wison/.cache/hare/home/wison/hare/temp/src/main.ha/5166c65aa219693705f919e12bb5f48ac9d9208cb91e7759bf8a55b3f45c0b23.bin.tmp -T /usr/local/share/hare/stdlib/rt/+freebsd/hare.sc /home/wison/.cache/hare/usr/local/share/hare/stdlib/rt/ce9064d31c9d7cf716c9b9f03dbb90ab69be4cdd5739def202d9c658826d3bb6.o /home/wison/.cache/hare/usr/local/share/hare/stdlib/types/c2d6997aa7dcc50a2ab860804ef216b2c4ee7fd18cf83236088cef947f4b8c67.o /home/wison/.cache/hare/usr/local/share/hare/stdlib/bytes/d9a81ca3bb30331fa509d6a1ceb27d9c0b4c3ffad3932c80d7b3e616561bb75b.o /home/wison/.cache/hare/usr/local/share/hare/stdlib/encoding/utf8/757dc38f287ebc05f7599ec6af5f18bfcb89a7abd0191ca6800de6f7dac10aab.o /home/wison/.cache/hare/usr/local/share/hare/stdlib/errors/0cc49abc526b637b1e7c51bba3555ee0440ea5130a2d179125c44ce4d9f3bd13.o /home/wison/.cache/hare/usr/local/share/hare/stdlib/io/7173fdd45e1d69e436c8ecae9401d155f6f19bc5dd79d0e631ba7487bd5c44c7.o /home/wison/.cache/hare/usr/local/share/hare/stdlib/sort/cmp/2fc42a8d5eb1ec179796912b8cf3e27051dbbfa298d4d8b300846173877cca6a.o /home/wison/.cache/hare/usr/local/share/hare/stdlib/strings/8c076dfaefa01bdd4c71b38a8c4fede7051a986e7f461d51bd9e48cf3d6f6fb3.o /home/wison/.cache/hare/usr/local/share/hare/stdlib/bufio/0b73121ff94c2624935db877b3529be94491c82a592984cafccfbbfe6f12879d.o /home/wison/.cache/hare/usr/local/share/hare/stdlib/format/elf/c4959cc94d4fbc37042f789cabbc8a476f329bbed5a901108c05e3f12c66b0c6.o /home/wison/.cache/hare/usr/local/share/hare/stdlib/path/e46043bcc2723b2bb6f22ffada0245f3d8c5768a22029b71f2993cdd26db95e2.o /home/wison/.cache/hare/usr/local/share/hare/stdlib/math/7c48efc6b5e79e829a8cb4e22cc35e20f2dd2d150649279e6c14b969dde666cb.o /home/wison/.cache/hare/usr/local/share/hare/stdlib/time/06e2610be5c7592d616b1a82703f06f02cf26d2b5aec05681c1f4a74ebc06cdd.o /home/wison/.cache/hare/usr/local/share/hare/stdlib/fs/4ab88277f95c85c825c521e108bb9658b4b0dc86021498e848e04e528071b017.o /home/wison/.cache/hare/usr/local/share/hare/stdlib/memio/1676a72d36714d38d49032df33a8039d858b299f83446977ab1f0661166c28f4.o /home/wison/.cache/hare/usr/local/share/hare/stdlib/types/c/f2b8bcca7e12bc630e90e014bd829aceea51af27dddcc086b0f3786395bcf286.o /home/wison/.cache/hare/usr/local/share/hare/stdlib/os/d61d73bbf58b5b1fcbc1ae077e039b36e50f1b56d3f3e848f6d302675d4a1fbd.o /home/wison/.cache/hare/usr/local/share/hare/stdlib/ascii/4cf5a97b38e67b12ce9386d839012c4a264dd10a43d866e2463fd316330de291.o /home/wison/.cache/hare/usr/local/share/hare/stdlib/strconv/5536f6b717cc7930202649aa6d5a95b5b328bdbe0d65e624e9d4969c2492fa95.o /home/wison/.cache/hare/usr/local/share/hare/stdlib/fmt/6bb1e9d8d07b8a8ba37e30b0d39117fc2287c7fe32cdf745016f1e94eb5da923.o /home/wison/.cache/hare/usr/local/share/hare/stdlib/unix/b4acc4b28ebd1d55305bb206358a4b373c3c7be6038ad7e7046eecd5013cd1a1.o /home/wison/.cache/hare/usr/local/share/hare/stdlib/unix/signal/492c833e1c360084e78ce887cf45995fe5cd5e32d9bbf776a4c3a64d6d8847b5.o /home/wison/.cache/hare/usr/local/share/hare/stdlib/os/exec/bdb158d81dcd1788ee5b50ded0d7838995e89b30cbc407c0ee5a16b6b7fc0183.o /home/wison/.cache/hare/usr/local/share/hare/stdlib/debug/image/042d48ba32e113fc9a220e195ebaddc4301f149fc0ffbc46dfdc6ea86a41bcf3.o /home/wison/.cache/hare/usr/local/share/hare/stdlib/encoding/hex/eea93f2b1dfa2e90365bc494aed7412938c2adc64f7093bf01ba94671fa22fff.o /home/wison/.cache/hare/usr/local/share/hare/stdlib/endian/f4d09c7b5f62eaaa29e08bd6dc292ad78dbbbaec2a0420a540f089ed4aa3b971.o /home/wison/.cache/hare/usr/local/share/hare/stdlib/sort/7cb390a0370000313d5a8eacb5ef54322de1035d8ee553221f29c6945091587f.o /home/wison/.cache/hare/usr/local/share/hare/stdlib/debug/dwarf/6e2d07e4fcb9592f0b3929f0e4d5b53a78796a514767e4485419dad2b9e9e616.o /home/wison/.cache/hare/usr/local/share/hare/stdlib/debug/0cd5d3fe4869643c31774660d322adfe985067d8eb293c1eb0638955828b8037.o /home/wison/.cache/hare/home/wison/hare/temp/src/main.ha/d75a4d789c926abb3e8b83fdf1326102ced84c29a8fd8e29a5a95379740be35b.o
+
+  #
+  # Binary output
+  #
+  >>> Hello from Hare:)
+#+END_SRC
+
+
+** How to generate obj file, assembly file and binary file for any given =.ha= source code
+
+#+BEGIN_SRC bash
+  #
+  # Generate object file
+  #
+  hare build -t o -o out/main.o src/main.ha
+
+  #
+  # Generate assembly file
+  #
+  hare build -t s -o out/main.s src/main.ha
+
+  #
+  # Generate final binary file (`hare build` default behavior)
+  #
+  hare build -t bin -o out/main src/main.ha
+
+  ls -lht out
+  # -rwxr-xr-x  1 wison wison  441K Apr 22 11:13 main*   // binary file
+  # -rw-r--r--  1 wison wison  2.1K Apr 22 11:13 main.s  // assembly file
+  # -rw-r--r--  1 wison wison  3.9K Apr 22 11:13 main.o  // object file
+#+END_SRC
+
+
+** Release build
+
+By default, a debug build is produced, which enables things like backtraces. You can make a release build with =-R=.
+
+As of now there aren't any optimization flags; the optimization level is the same no matter what.
+
+
+#+BEGIN_SRC bash
+  #
+  # Use `-R` to produce release build and you need to `strip` it manually
+  #
+  hare build -o main-release -R src/main.ha && strip main-release
+
+  #
+  # It's a static-linked binary
+  #
+  file main-release
+  # main-release: ELF 64-bit LSB executable, x86-64, version 1 (FreeBSD), statically linked, stripped
+
+  ldd main-release
+  # ldd: main-release: not a dynamic ELF executable
+#+END_SRC
+
+
+Also, you can run release build with =-R=:
+
+#+BEGIN_SRC bash
+  hare run -R src/main.ha
+#+END_SRC
+
+
+** Does the compiler doesn't compile all functions that do not get called?
+
+=NO!!!=
+
+The compiler will compile all functions. It's the linker that strips them out of the final binary.
+
+How to prove that?
+
+Here is the =src/main.ha=:
+
+#+BEGIN_SRC hare
+  use fmt;
+
+  type Color = enum {
+          RED,
+          ORANGE,
+          YELLOW,
+          GREEN,
+  };
+
+  fn color_to_string(c: Color) str = {
+      switch (c) {
+      case Color::RED =>
+          return "Red";
+      case Color::ORANGE =>
+          return "Orange";
+      case Color::YELLOW =>
+          return "Yellow";
+      case Color::GREEN =>
+          return "Green";
+      };
+  };
+
+  export fn main() void = {
+      // fmt::printfln(">>> Color::GREEN, int value: {}, str value: {}",
+      //               Color::GREEN: u8, color_to_string(Color::GREEN))!;
+      fmt::printfln(">>> Hello:)")!;
+  };
+#+END_SRC
+
+So, build the object file and print the =color_to_string= from the symbol table:
+
+#+BEGIN_SRC bash
+  #
+  # Produce an object file
+  #
+  hare build -t o -o out/main.ha.o src/main.ha
+
+  #
+  # Print the symbol table and grep the name
+  #
+  objdump -t ./out/main.ha.o | rg color_to_string
+  # 0000000000000000 .text.color_to_string
+  # 0000000000000000 l     F .text.color_to_string  000000000000011f color_to_string
+#+END_SRC
+
+
+And now, build the binaryand print the =color_to_string= from the symbol table:
+
+#+BEGIN_SRC bash
+  hare build -o out/main_bin src/main.ha
+
+  #
+  #
+  #
+  objdump -t ./out/main_bin | rg color_to_string 
+#+END_SRC
+ 

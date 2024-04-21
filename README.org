@@ -2,6 +2,7 @@
 
 ** [[file:chapters/data-types.org][Data types]]
 ** [[file:chapters/var-init.org][Vairable initialization]]
+** [[file:chapters/def.org][def]]
 ** [[file:chapters/enum.org][Enum]]
 ** [[file:chapters/tagged-union.org][Tagged union]]
 ** Control floear
@@ -23,6 +24,7 @@
 *** [[file:m-c-number-to-string.org][Number to string]]
 ** [[file:n-typedef.org][typedef]]
 ** [[file:p-bits.org][Bits]]
+** [[file:chapters/compiler-related.org][Compiler related]]
 ** [[file:q-a-everything-about-logging.org][Everything about logging]]
 *** [[file:q-b-logging-in-unit-test.org][logging in unit test]]
 ** [[file:r-reader-and-writer.org][Reader and writer]]

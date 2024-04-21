@@ -1,0 +1,12 @@
+* =def=
+
+=def= declares a constant, for example:
+
+#+BEGIN_SRC hare
+  // [[duration]] representing a single nanosecond.
+  export def NANOSECOND: duration = 1;
+#+END_SRC
+
+In this case, everywhere that =NANOSECOND= is used, it's substituted with =1=.
+
+It's not exactly a pre-processor, since it's not substituting lexical tokens or manipulating the AST directly or anything like that, but it behaves somewhat similarly to using =#define= for constants (except it's the evaluated expression that's substituted, not the tokens themselves like with C's pre-processor).
