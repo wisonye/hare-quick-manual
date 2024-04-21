@@ -1,0 +1,113 @@
+* Vairable initialization
+
+In =hare=, you have to initialize a value when declaring a variable!!!
+
+#+BEGIN_SRC hare
+  //
+  // Declare with explicit data type
+  //
+  const a: u8 = 255;
+  const b: int = 255;
+  const c: uint = 255;
+  const d: size = 255;
+  fmt::printfln(">>> a, size: {}, value: {}", size(u8), a)!;
+  fmt::printfln(">>> b, size: {}, value: {}", size(int), b)!;
+  fmt::printfln(">>> c, size: {}, value: {}", size(uint), c)!;
+  fmt::printfln(">>> d, size: {}, value: {}", size(size), d)!;
+
+  //
+  // The data type will be inferences
+  //
+  const a = 255u32;
+  const b = 255i; 
+  const c = 255u;
+  const d = 255z;
+#+END_SRC
+
+
+** Working with =if else=
+
+#+BEGIN_SRC hare
+  const value = if (true) "Yes" else "No";
+  fmt::printfln(">>> value: {}", value)!;
+#+END_SRC
+
+
+** Array initialization
+
+#+BEGIN_SRC hare
+  //
+  // Give element type and length explicitly
+  //
+  const arr_1: [5]u8 = [1, 2, 3, 4, 5];
+
+  //
+  // Auto inferences element type and length
+  //
+  const arr_2 = [1, 2, 3, 4, 5];
+  const arr_3 = [1u16, 2, 3, 4, 5];
+  const arr_4  = [1z, 2, 3, 4, 5];
+
+  //
+  // Auto inferences length
+  //
+  const arr_5: [_]u8 = [1, 2, 3, 4, 5];
+  const arr_6: [_]size = [1, 2, 3];
+
+  const person_arr: [_]Person = [Person {
+        first_name = "Andy",
+        last_name = "Lao",
+        age = 18,
+  }, Person {
+        first_name = "Wison",
+        last_name = "Ye",
+        age = 28,
+  }];
+#+END_SRC
+
+
+** =...= spreat operator
+
+*** Use on array init
+
+#+BEGIN_SRC hare
+  #
+  # Use `...` to fill the rest elements of the given array.
+  #
+  const temp_arr: [5]size = [0xAA...];
+  for( let index=0z; index < len(temp_arr); index +=1) {
+          fmt::printfln(">>> temp_arr[{}]: 0x{:X}", index, temp_arr[index])!;
+  };
+#+END_SRC
+
+Output:
+
+#+BEGIN_SRC bash
+  >>> temp_arr[0]: 0xAA
+  >>> temp_arr[1]: 0xAA
+  >>> temp_arr[2]: 0xAA
+  >>> temp_arr[3]: 0xAA
+  >>> temp_arr[4]: 0xAA
+#+END_SRC
+
+
+*** Use on struct init
+
+#+BEGIN_SRC hare
+  #
+  # Only initializes the given field, the rest fields are filled
+  # with a default value of their types.
+  #
+  const wison = Person { age = 88, ... };
+  fmt::printfln(">>> wison - first_name: {}, last_name: {}, age: {}",
+          wison.first_name,
+          wison.last_name,
+          wison.age,
+  )!;
+#+END_SRC
+
+Output:
+
+#+BEGIN_SRC bash
+  >>> wison - first_name: , last_name: , age: 88 
+#+END_SRC

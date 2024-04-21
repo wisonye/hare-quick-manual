@@ -1,0 +1,57 @@
+* Enum
+
+#+BEGIN_SRC hare
+  type Color = enum {
+          RED = 0x02, // Start from 0 by default
+          ORANGE,
+          YELLOW,
+          GREEN,
+          BLUE,
+          VIOLET,
+  };
+
+  fn color_to_string(c: Color) str = {
+          switch (c) {
+          case Color::RED =>
+                  return "Red";
+          case Color::ORANGE =>
+                  return "Orange";
+          case Color::YELLOW =>
+                  return "Yellow";
+          case Color::GREEN =>
+                  return "Green";
+          case Color::BLUE =>
+                  return "Blue";
+          case Color::VIOLET =>
+                  return "Violet";
+          };
+  };
+
+  export fn main() void = {
+          fmt::printfln("Color::RED\t- value: 0x{:X}, string: {}",
+                  Color::RED: u8,
+                  color_to_string(Color::RED))!;
+          fmt::printfln("Color::ORANGE\t- value: 0x{:X}, string: {}",
+                  Color::ORANGE: u8,
+                  color_to_string(Color::ORANGE))!;
+          fmt::printfln("Color::YELLOW\t- value: 0x{:X}, string: {}",
+                  Color::YELLOW: u8,
+                  color_to_string(Color::YELLOW))!;
+          fmt::printfln("Color::GREEN\t- value: 0x{:X}, string: {}",
+                  Color::GREEN: u8,
+                  color_to_string(Color::GREEN))!;
+          fmt::printfln("Color::VIOLET\t- value: 0x{:X}, string: {}",
+                  Color::VIOLET: u8,
+                  color_to_string(Color::VIOLET))!;
+  };
+#+END_SRC
+
+Output
+
+#+BEGIN_SRC bash
+  Color::RED	- value: 0x2, string: Red
+  Color::ORANGE	- value: 0x3, string: Orange
+  Color::YELLOW	- value: 0x4, string: Yellow
+  Color::GREEN	- value: 0x5, string: Green
+  Color::VIOLET	- value: 0x7, string: Violet
+#+END_SRC

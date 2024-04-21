@@ -1,0 +1,49 @@
+* Date types
+
+** Primitive Types
+
+| Type             | C Equivalent         | Description                                                                     |
+| ---------------- | -------------------- | ------------------------------------------------------------------------------- |
+| i8               | =int8_t=               | signed 8-bit integer                                                            |
+| =u8=               | =uint8_t=              | unsigned 8-bit integer                                                          |
+| =i16=              | =int16_t=              | signed 16-bit integer                                                           |
+| =u16=              | =uint16_t=             | unsigned 16-bit integer                                                         |
+| =i32=              | =int32_t=              | signed 32-bit integer                                                           |
+| =u32=              | =uint32_t=             | unsigned 32-bit integer                                                         |
+| =i64=              | =int64_t=              | signed 64-bit integer                                                           |
+| =u64=              | =uint64_t=             | unsigned 64-bit integer                                                         |
+| =int=              |                      | implementation-defined width integer.                                           |
+| =uint=             |                      | implementation-defined width unsigned integer.                                  |
+| =size=             | =size_t=               | unsigned sized integer.                                                         |
+| =uintptr=          | =uintptr_t=            | unsigned pointer sized integer.                                                 |
+| =f32=              | =float=                | 32-bit floating point (23-bit mantissa) IEEE-754-2008 binary32                  |
+| =f64=              | =double=               | 64-bit floating point (52-bit mantissa) IEEE-754-2008 binary64                  |
+| =bool=             | =bool=                 | true or false                                                                   |
+| =done=             |                      | an object that indicates the end of a for-each iterator loop                    |
+| =never=            |                      | use as result type of expression which are guaranteed to never return to caller |
+| =null=             | =null_t=               | NULL pointer                                                                    |
+| =void=             | =void=                 |                                                                                 |
+| =type=             | (none)               | the type of types                                                               |
+| =anyerror=         | (none)               | an error code                                                                   |
+| =comptime_int=     | (none)               | Only allowed for comptime-known values. The type of integer literals.           |
+| =comptime_float=   | (none)               | Only allowed for comptime-known values. The type of float literals.             |
+
+
+** Integer value range
+
+| Type    | Width in bits |                  Min value | Max value                  |
+|---------+---------------+----------------------------+----------------------------|
+| =i8=      |             8 |                       -128 | 128                        |
+| =i16=     |            16 |                    -32,768 | 32,767                     |
+| =i32=     |            32 |             -2,147,483,648 | 2,147,483,647              |
+| =i64=     |            64 | -9,223,372,036,854,775,808 | 9,223,372,036,854,775,807  |
+| =u8=      |             8 |                          0 | 255                        |
+| =u16=     |            16 |                          0 | 65,535                     |
+| =u32=     |            32 |                          0 | 4,294,967,295              |
+| =u64=     |            64 |                          0 | 18,446,744,073,709,551,615 |
+| =int=     |          >=32 |           <=-2,147,483,648 | >=2,147,483,647            |
+| =uint=    |          >=32 |                          0 | >=4,294,967,295            |
+| =size=    |             * |                          0 | *                          |
+| =uintptr= |             * |                          0 | *                          |
+
+=*= means implementation-defined.

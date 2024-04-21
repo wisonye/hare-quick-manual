@@ -1,0 +1,104 @@
+* Struct
+
+** Struct aligment and padding spaces
+
+Struct uses the biggest field size as an alignment base and add padding spaces from top field to bottom field, that's why the order of fields are very important to reduce total bytes!!!
+
+For example:
+
+*** Case 1
+
+#+BEGIN_SRC hare
+  type A = struct {
+        a: u8,
+        c: u16,
+        y: uint,
+        b: size,
+  };
+#+END_SRC
+
+The biggest field size is =b: size= which takes =8= bytes on =64= bits system, that's why alignment based on =8= bytes!
+
+So, packed size from top to bottom field, only need to add packking when field bytes is bigger than the alignment-based =8= bytes:
+
+#+BEGIN_SRC hare
+  //
+  // Alignment is 8 bytes
+  // Total size is 16 bytes
+  //
+  type A = struct {
+        a: u8,    // 1 byte
+        c: u16,   // 2 bytes
+        y: uint,  // 4 bytes
+
+        //
+        // Total above fields are 7 bytes, the next field is 8 bytes, 7+8 >8,
+        // that's why padding happen here to add 1 byte (8-7=1).
+        //
+
+        b: size,  // 8 bytes
+  };
+
+  fmt::printfln(">>> struct, size: {}, align: {}", size(A), align(A))!;
+#+END_SRC
+
+
+Output
+
+#+BEGIN_SRC bash
+  >>> struct, size: 16, align: 8 
+#+END_SRC
+
+
+
+*** Case 2
+
+Same struct but with different field order, the result will be different:
+
+#+BEGIN_SRC hare
+  type A = struct {
+        a: u8,
+        c: u16,
+        b: size,
+        y: uint,
+  };
+#+END_SRC
+
+The biggest field size is =b: size= which takes =8= bytes on =64= bits system, that's why alignment based on =8= bytes!
+
+So, packed size from top to bottom field, only need to add packking when field bytes is bigger than the alignment-based =8= bytes:
+
+#+BEGIN_SRC hare
+  //
+  // Alignment is 8 bytes
+  // Total size is 24 bytes
+  //
+  type A = struct {
+        a: u8,    // 1 byte
+        c: u16,   // 2 bytes
+
+        //
+        // Total above fields are 3 bytes, the next field is 8 bytes, 3+8 >8,
+        // that's why padding happen here to add 5 byte (8-3=5).
+        //
+
+        b: size,  // 8 bytes
+
+        //
+        // The last field is 4 bytes, needs to be padded with 8 bytes.
+        // why padding happen here to add 4 byte (8-4=4).
+        //
+
+        y: uint,  // 4 bytes
+  };
+
+  fmt::printfln(">>> struct, size: {}, align: {}", size(A), align(A))!;
+#+END_SRC
+
+
+Output
+
+#+BEGIN_SRC bash
+  >>> struct, size: 24, align: 8 
+#+END_SRC
+
