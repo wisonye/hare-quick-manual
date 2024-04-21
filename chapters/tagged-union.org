@@ -1,0 +1,92 @@
+* Tagged union
+
+Here is the tagged union example:
+
+#+BEGIN_SRC hare
+  type RequestIsUnkonwn = void;
+  type RequestIsWaiting = void;
+  type RequestIsReadyToRun = void;
+  type RequestIsProcessing = void;
+  type RequestIsDone = void;
+  type RequestIsFailed = void;
+  type RequestQueryResult = ( RequestIsUnkonwn | RequestIsWaiting | RequestIsReadyToRun | RequestIsProcessing | RequestIsDone | RequestIsFailed );
+#+END_SRC
+
+
+Each type in =Hare= is assigned a unique ID, which is stored as the first field of a tagged union type to indicate which type is stored there. Following the tag, a union of all of the possible types is stored.
+
+Imagine the =RequestQueryResult= tagged union will be translated into the following struct:
+
+#+BEGIN_SRC hare
+  type RequestQueryResult_repr = struct {
+          id: u32,
+          union {
+            RequestIsUnkonwn: void,
+            RequestIsWaiting: void,
+            RequestIsReadyToRun: void,
+            RequestIsProcessing: void,
+            RequestIsDone: void,
+            RequestIsFailed: void,
+          },
+  };
+#+END_SRC
+
+
+Full example:
+
+#+BEGIN_SRC hare
+  use fmt;
+
+  type RequestIsUnkonwn = void;
+  type RequestIsWaiting = void;
+  type RequestIsReadyToRun = void;
+  type RequestIsProcessing = void;
+  type RequestIsDone = void;
+  type RequestIsFailed = void;
+  type RequestQueryResult = ( RequestIsUnkonwn | RequestIsWaiting | RequestIsReadyToRun | RequestIsProcessing | RequestIsDone | RequestIsFailed );
+
+  fn request_result_to_string(query_result: RequestQueryResult) str = {
+          match (query_result) {
+                  case RequestIsUnkonwn => return "Request is unknown";
+                  case RequestIsWaiting => return "Request is waiting";
+                  case RequestIsReadyToRun => return "Request is ready to run"; 
+                  case RequestIsProcessing => return "Request is processing"; 
+                  case RequestIsDone => return "Request is done";
+                  case RequestIsFailed => return "Request is failed";
+          };
+  };
+
+  fn query_request(req_id: size) RequestQueryResult = {
+          switch (req_id) {
+                  case 1 => return RequestIsWaiting;	
+                  case 2 => return RequestIsReadyToRun;	
+                  case 3 => return RequestIsProcessing;	
+                  case 4 => return RequestIsDone;	
+                  case 5 => return RequestIsFailed;	
+                  case => return RequestIsUnkonwn;	
+          };
+  };
+
+  export fn main() void = {
+          fmt::printfln(">>> query_result: {}", request_result_to_string(query_request(1)))!;
+          fmt::printfln(">>> query_result: {}", request_result_to_string(query_request(2)))!;
+          fmt::printfln(">>> query_result: {}", request_result_to_string(query_request(3)))!;
+          fmt::printfln(">>> query_result: {}", request_result_to_string(query_request(4)))!;
+          fmt::printfln(">>> query_result: {}", request_result_to_string(query_request(5)))!;
+          fmt::printfln(">>> query_result: {}", request_result_to_string(query_request(6)))!;
+          fmt::printfln(">>> query_result: {}", request_result_to_string(query_request(7)))!;
+  };
+#+END_SRC
+
+
+Output:
+
+#+BEGIN_SRC bash
+  >>> query_result: Request is waiting
+  >>> query_result: Request is ready to run
+  >>> query_result: Request is processing
+  >>> query_result: Request is done
+  >>> query_result: Request is failed
+  >>> query_result: Request is unknown
+  >>> query_result: Request is unknown
+#+END_SRC
