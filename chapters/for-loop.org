@@ -1,0 +1,77 @@
+* For loop
+
+** for loop
+
+#+BEGIN_SRC hare
+  const buffer = [1, 2, 3, 4];
+  for( let index=0z; index < len(buffer); index +=1) {
+          fmt::printfln(">>> buffer[{}]: {}", index, buffer[index])!;
+  };
+#+END_SRC
+
+
+** while loop
+
+This is no =while= loop in =Hare=, use =for (true) {}= instead!!!
+
+#+BEGIN_SRC hare
+  export fn main() void = {
+
+          const buffer = [1, 2, 3, 4];
+          const buf_len = len(buffer);
+          let index = 0z;
+          for (index < buf_len) {
+                  fmt::printfln(">>> buffer[{}]: {}", index, buffer[index])!;
+                  index += 1;
+          };
+
+          index = 0z;
+          for (true) {
+                  fmt::printfln(">>> buffer[{}]: {}", index, buffer[index])!;
+                  index += 1;
+
+                  if (index >= buf_len) break;
+          };
+  };
+#+END_SRC
+
+
+** for-each loop
+
+#+BEGIN_SRC hare
+  use fmt;
+
+  const items = [
+          "apple",
+          "banana",
+          "carrot",
+  ];
+  let items_counter = 0z;
+
+  // iterator function
+  fn next() (str | done) = {
+          if (items_counter < len(items)) {
+                  items_counter += 1;
+                  return items[items_counter - 1];
+          };
+          return done;
+  };
+
+
+  export fn main() void = {
+          // for-each value
+          for (let item .. items) {
+                  fmt::printfln("{}", item)!;
+          };
+
+          // for-each reference
+          for (let item_ptr &.. items) {
+                  fmt::printfln("{} = {}", item_ptr, *item_ptr)!;
+          };
+
+          // for-each iterator
+          for (let item => next()) {
+                  fmt::printfln("{}", item)!;
+          };
+  }; 
+#+END_SRC

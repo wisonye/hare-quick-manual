@@ -1,0 +1,38 @@
+* Match
+
+You should use =match= expression on a tagged union value to handle different cases.
+
+Example:
+
+#+BEGIN_SRC hare
+    use fmt;
+    use fs;
+    use io;
+    use os;
+
+    export fn main() void = {
+            //
+            // `os::open` returns `(io::file | fs::error)` tagged union
+            //
+            const file = match (os::open(os::args[1])) {
+                //
+                // `case let var` to hold the tagged union value temporary
+                //
+                case let f: io::file =>
+                        yield f; // `yield` to return value back to outer variable.
+                case let err: fs::error =>
+                        fmt::fatalf("Unable to open {}: {}",
+                                    os::args[1], fs::strerror(err));
+            };
+
+            //
+            // `io::copy` returns `(size | error)` tagged union
+            //
+            match (io::copy(os::stdout, file)) {
+                case size =>
+                        yield;
+                case let err: io::error =>
+                        fmt::fatalf("copy: {}", fs::strerror(err));
+            };
+    };
+#+END_SRC

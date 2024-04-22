@@ -1,0 +1,43 @@
+* Switch
+
+**  Example
+
+#+BEGIN_SRC hare
+  export fn main() void = {
+          const byte = 8u8;
+
+          switch (byte) {
+                  case 1 => fmt::printfln(">>> That's 1")!;
+                  case 2 => fmt::printfln(">>> That's 2")!;
+                  case 3 => fmt::printfln(">>> That's 3")!;
+                  //
+                  // This is the `default` branch
+                  //
+                  case => fmt::printfln(">>> That's the rest of u8")!;
+          };
+  };
+#+END_SRC
+
+
+Note that =switch= expressions are required to be exhaustive, which means that every possible value of the =switch= value should have a corresponding branch. 
+
+For example, if you miss the =case => fmt::printfln(">>> That's the rest of u8")!;= line in the above case, you will get the following error:
+
+#+BEGIN_SRC bash
+
+ hare/temp/src/main.ha:81:15: error: Switch expression isn't exhaustive
+
+  81 |		switch (byte) {
+     |	              ^
+
+
+  harec for /home/wison/hare/temp/src/main.ha exited with status 1
+ 
+#+END_SRC
+
+
+** You can't use =switch= on a =tagged union=, otherwise, you will get the following errors:
+
+#+BEGIN_SRC bash
+  error: Cannot switch on tagged union type
+#+END_SRC

@@ -102,3 +102,47 @@ Output
   >>> struct, size: 24, align: 8 
 #+END_SRC
 
+
+*** Case 3
+
+Same struct but with different field order, the result will be different:
+
+#+BEGIN_SRC hare
+  type A = struct {
+        a: u8,
+        b: u16,
+        c: uint,
+  };
+#+END_SRC
+
+The biggest field size is =c: uint= which takes =4= bytes on =64= bits system, that's why alignment based on =4= bytes!
+
+So, packed size from top to bottom field, only need to add packking when field bytes is bigger than the alignment-based =4= bytes:
+
+#+BEGIN_SRC hare
+  //
+  // Alignment is 4 bytes
+  // Total size is 8 bytes
+  //
+  type A = struct {
+        a: u8,    // 1 byte
+        b: u16,   // 2 bytes
+
+        //
+        // Total above fields are 3 bytes, the next field is 4 bytes, 3+4 > 4,
+        // that's why padding happen here to add 1 byte (4-3=1).
+        //
+
+        c: uint,  // 4 bytes
+  };
+
+  fmt::printfln(">>> struct, size: {}, align: {}", size(A), align(A))!;
+#+END_SRC
+
+
+Output
+
+#+BEGIN_SRC bash
+  >>> struct, size: 8, align: 4 
+#+END_SRC
+
