@@ -9,7 +9,7 @@
 *** [[file:chapters/for-loop.org][for-loop]]
 *** [[file:chapters/switch.org][switch]]
 *** [[file:chapters/match.org][match]]
-** [[file:f-error.org][Error]]
+** [[file:chapters/error-handling.org][Error handling]]
 ** [[file:chapters/struct.org][Struct]]
 ** [[file:i-array.org][Array]]
 ** [[file:j-string-format.org][String format]]

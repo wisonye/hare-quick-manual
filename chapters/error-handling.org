@@ -1,0 +1,328 @@
+* Error handling
+
+** If you don't care about error, just let it crash by using =!=
+
+For example:
+
+#+BEGIN_SRC hare
+  fn printfln(fmt: str, args: field...) (io::error | size); 
+#+END_SRC
+
+That =fmt::printfln= function you use everyday returns a tagged union that either an =io::error= or the total printed byte size (include the newline character). That said you should use the =match= expression for the return tagged union to handle different situations:
+
+#+BEGIN_SRC hare
+  const printed_size = match (fmt::printfln("12345678")){
+          case let count: size => yield count;
+          case let err: io::error => {
+                  fmt::fatal("\n>>> Error happend: {}", io::strerror(err));
+          };
+  };
+  fmt::printfln(">>> printed_size: {}", printed_size)!;
+#+END_SRC
+
+or if don't care about the printed byte size at all:
+
+#+BEGIN_SRC hare
+  match (fmt::printfln("12345678")){
+          case let count: size => void;
+          case let err: io::error => {
+                  fmt::fatal("\n>>> Error happend: {}", io::strerror(err));
+          };
+  };
+#+END_SRC
+
+
+Otherwise, you will see the following error if you call the function in this way: =fmt::printfln("12345678");=
+
+#+BEGIN_SRC bash
+  hare/temp/src/main.ha:147:22: error: Cannot ignore error here
+
+  147 |		fmt::printfln("12345678");
+      |	                     ^
+#+END_SRC
+
+
+But if you allow the program to crash without error handling, you can put the =!= at the end of the function call like this:
+
+#+BEGIN_SRC hare
+  fmt::printfln("12345678")!; 
+#+END_SRC
+
+
+
+** Propagate the error to the outer function by using =?=
+
+The out funtion return tagged union must have error type, that's the essential condition of error propagation!!!
+
+#+BEGIN_SRC hare
+  use fmt;
+  use fs;
+  use fs::{flag};
+  use io;
+  use os;
+  use strings;
+
+  //
+  // Funtion return tagged union with error type, That's the essential
+  // condition of error propagation.
+  //
+  fn writehello(path: str) (fs::error | io::error | void) = {
+          const oflags = flag::WRONLY | flag::TRUNC;
+          //
+          // Use `?` to propagate error
+          //
+          const file = os::create(path, 0o644, oflags)?;
+
+          defer io::close(file)!;
+          const buf = strings::toutf8("Hello world!\n");
+
+          //
+          // Use `?` to propagate error
+          //
+          io::write(file, buf)?;
+  }; 
+
+  export fn main() void = {
+          const path = os::args[1];
+
+          //
+          // Handle all errors here!!!
+          //
+          match (writehello(path)) {
+          case void =>
+                  yield;
+          case let err: fs::error =>
+                  fmt::fatalf("File error ({}): {}", path, fs::strerror(err));
+          case let err: io::error =>
+                  fmt::fatalf("IO erroe ({}): {}", path, io::strerror(err));
+          };
+  };
+
+#+END_SRC
+
+
+** Define custom errors
+
+Error type and error tagged union must have a =!= prefix, 
+
+#+BEGIN_SRC hare
+  #
+  # Error type
+  #
+  type ServerBusy = !void;
+  type ServerIsOffline = !void;
+  type ServerUnreachable = !void;
+  type ServerConnectTimeout = !void;
+  type ServerUnknownError = !void;
+
+  #
+  # Error tagged union
+  #
+  type OpenServerError = !(
+          ServerBusy |
+          ServerIsOffline |
+          ServerUnreachable |
+          ServerConnectTimeout |
+          ServerUnknownError
+  );
+
+  #
+  # Usually, `strerror` function is the standard pattern to describe errors
+  #
+  fn strerror(err: OpenServerError) str = {
+          match (err) {
+          case ServerBusy => return "ServerBusy";
+          case ServerIsOffline => return "ServerIsOffline";
+          case ServerUnreachable => return "ServerUnreachable";
+          case ServerConnectTimeout => return "ServerConnectTimeout";
+          case ServerUnknownError => return "ServerUnknownError";
+          };
+  };
+#+END_SRC
+
+
+** Full example of custom errors
+
+#+BEGIN_SRC hare
+  type ServerBusy = !void;
+  type ServerIsOffline = !void;
+  type ServerUnreachable = !void;
+  type ServerConnectTimeout = !void;
+  type ServerUnknownError = !void;
+
+  type OpenServerError = !(
+          ServerBusy |
+          ServerIsOffline |
+          ServerUnreachable |
+          ServerConnectTimeout |
+          ServerUnknownError
+  );
+
+  fn strerror(err: OpenServerError) str = {
+          match (err) {
+          case ServerBusy => return "ServerBusy";
+          case ServerIsOffline => return "ServerIsOffline";
+          case ServerUnreachable => return "ServerUnreachable";
+          case ServerConnectTimeout => return "ServerConnectTimeout";
+          case ServerUnknownError => return "ServerUnknownError";
+          };
+  };
+
+  //
+  // Return either server listening IP or error
+  //
+  fn open_server(url: str) (str | OpenServerError ) =  {
+          switch (url) {
+                  case "https://localhost" => return "127.0.0.1";
+                  case "https://busy.com" => return ServerBusy;
+                  case "https://offline.com" => return ServerIsOffline ;
+                  case "https://abc.com" => return ServerUnreachable ;
+                  case "https://wrong.com" => return ServerConnectTimeout;
+                  case => return ServerUnknownError;
+          };
+  };
+
+  export fn main() void = {
+          // const url = "https://localhost";
+          // const url = "https://busy.com";
+          // const url = "https://offline.com";
+          // const url = "https://abc.com";
+          // const url = "https://wrong.com";
+          const url = "https://xxx";
+
+          match (open_server(url)) {
+                  case let ip: str => fmt::printfln(">>> Open server done, listening on '{}'", ip)!;
+                  case let err: OpenServerError => fmt::printfln(">>> Open server failed with error: {}", strerror(err))!;
+          };
+  };
+#+END_SRC
+
+
+** =...= operator
+
+=errors= stdlib module defines all base erros and has its own =strerror= function:
+
+#+BEGIN_SRC hare
+  // ...ignore
+
+  // A tagged union of all error types.
+  type error = !(busy | exists | invalid | noaccess | noentry | overflow | unsupported |
+          timeout | cancelled | refused | nomem | interrupted | again | opaque_);
+
+  // ...ignore
+
+  fn strerror(err: error) const str;
+#+END_SRC
+
+If you want to define a custom error that includes all possible errors, then you can use =...= operator like this:
+
+#+BEGIN_SRC hare
+  type ServerBusy = !void;
+  type ServerIsOffline = !void;
+  type ServerUnreachable = !void;
+  type ServerConnectTimeout = !void;
+  type ServerUnknownError = !void;
+
+  type OpenServerError = !(
+          ServerBusy |
+          ServerIsOffline |
+          ServerUnreachable |
+          ServerConnectTimeout |
+          ServerUnknownError |
+          //
+          // Include all error types that the `errors:error` tagged union used
+          //
+          ...errors::error
+  );
+
+  fn strerror(err: OpenServerError) str = {
+          match (err) {
+          case ServerBusy => return "ServerBusy";
+          case ServerIsOffline => return "ServerIsOffline";
+          case ServerUnreachable => return "ServerUnreachable";
+          case ServerConnectTimeout => return "ServerConnectTimeout";
+          case ServerUnknownError => return "ServerUnknownError";
+          //
+          // For all `errors::error` error types, use its own `strerror`
+          // function to grab the error message.
+          //
+          case let err: errors::error => return errors::strerror(err);
+          };
+  };
+#+END_SRC
+
+
+***  Full example here
+
+#+BEGIN_SRC hare
+  use fmt;
+  use errors;
+
+  type ServerBusy = !void;
+  type ServerIsOffline = !void;
+  type ServerUnreachable = !void;
+  type ServerConnectTimeout = !void;
+  type ServerUnknownError = !void;
+
+  type OpenServerError = !(
+          ServerBusy |
+          ServerIsOffline |
+          ServerUnreachable |
+          ServerConnectTimeout |
+          ServerUnknownError |
+          //
+          // Include all error types that the `errors:error` tagged union used
+          //
+          ...errors::error
+  );
+
+  fn strerror(err: OpenServerError) str = {
+          match (err) {
+          case ServerBusy => return "ServerBusy";
+          case ServerIsOffline => return "ServerIsOffline";
+          case ServerUnreachable => return "ServerUnreachable";
+          case ServerConnectTimeout => return "ServerConnectTimeout";
+          case ServerUnknownError => return "ServerUnknownError";
+          //
+          // For all `errors::error` error types, use its own `strerror`
+          // function to grab the error message.
+          //
+          case let err: errors::error => return errors::strerror(err);
+          };
+  };
+
+  //
+  // Return either server listening IP or error
+  //
+  fn open_server(url: str) (str | OpenServerError ) =  {
+          switch (url) {
+                  case "https://localhost" => return "127.0.0.1";
+                  case "https://busy.com" => return ServerBusy;
+                  case "https://offline.com" => return ServerIsOffline ;
+                  case "https://abc.com" => return ServerUnreachable ;
+                  case "https://wrong.com" => return ServerConnectTimeout;
+                  case "https://unsupported.com" => return errors::unsupported;
+                  case "https://timeout.com" => return errors::timeout;
+                  case "https://refused.com" => return errors::refused;
+                  case => return ServerUnknownError;
+          };
+  };
+
+  export fn main() void = {
+          // const url = "https://localhost";
+          // const url = "https://busy.com";
+          // const url = "https://offline.com";
+          // const url = "https://abc.com";
+          // const url = "https://wrong.com";
+          const url =  "https://unsupported.com";
+          // const url =  "https://timeout.com";
+          // const url =  "https://refused.com";
+          // const url = "https://xxx";
+
+          match (open_server(url)) {
+                  case let ip: str => fmt::printfln(">>> Open server done, listening on '{}'", ip)!;
+                  case let err: OpenServerError => fmt::printfln(">>> Open server failed with error: {}", strerror(err))!;
+          };
+  };
+#+END_SRC
+
