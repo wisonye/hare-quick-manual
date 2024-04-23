@@ -1,3 +1,134 @@
 * Hare modules
 
 For more details, plz run =man hare-module=.
+
+** Module concept
+
+In =Hare=, any folder containing any =.ha= source file or =README= file will be treated as a =module= that can be imported/used as a module. The folder name is the module name!!!
+
+For example:
+
+#+BEGIN_SRC bash
+  .
+  |-- main.ha
+  `-- utils
+      |-- README
+      |-- hex
+      |   |-- README
+      |   |-- hex.ha
+      |   `-- types.ha
+      `-- logger
+          |-- README
+          |-- logger.ha
+          `-- types.ha
+#+END_SRC
+
+
+- =main.ha=: Source file that contains =export fn main() void=
+
+- =utils=: A private module that can be imported by using =use utils=
+
+- =utils/README=: Module README, it's optional if the current folder has any =.ha= source files.
+
+- =utils/hex=: A private sub-module that can be imported by using =use utils::hex=
+  
+- =utils/hex/README=: Sub-module README, it's optional if the current folder has any =.ha= source files.
+
+- =utils/hex/types.ha=: It's convention to have a =types.ha= export all types inside the current module.
+
+- =utils/hex/hex.ha=: Sub-module source file.
+
+
+Very important to know:
+
+_For any given module, all =.ha= source files work like a virtual file only for separating a large single file into multiple small files, the filename has NO namespace meaning!!!_
+
+#+BEGIN_SRC bash
+`-- utils
+    |-- hex
+    |   |-- README
+    |   |-- hex.ha
+    |   `-- types.ha
+#+END_SRC
+
+For =utils/hex/types.ha= and =utils/hex/hex.ha=, they can see each, all =types/functions/constants/etc...= are visible to each other without calling =use xxx=!!! That's because they're all in the same folder (belong to the same module or sub-module).
+
+
+** =HAREPATH=: Indicate the compiler to search modules/dependencies
+
+By default, =HAREPATH= is empty, that means:
+
+- The compiler will go to =current folder= to search your private modules, for example: =use utils::logger=
+
+- The compiler will go to =/usr/local/src/hare/stdlib= to search stdlib modules, for example: =use io=
+
+#+BEGIN_SRC bash
+  echo $HAREPATH
+
+  hare version -v | rg stdlib
+  #        /usr/local/src/hare/stdlib
+#+END_SRC
+
+
+So, assume that you have the following =Hare= project folder structures:
+
+#+BEGIN_SRC bash
+  .
+  |-- main.ha
+  `-- utils
+      |-- README
+      |-- hex
+      |   |-- README
+      |   |-- hex.ha
+      |   `-- types.ha
+      `-- logger
+          |-- README
+          |-- logger.ha
+          `-- types.ha
+#+END_SRC
+
+Then, =hare run= or =hare run main.ha= will work.
+
+But what if you move all source files into a =src= folder like this:
+
+#+BEGIN_SRC bash
+  .
+  `-- src
+      |-- main.ha
+      `-- utils
+          |-- README
+          |-- hex
+          |   |-- README
+          |   |-- hex.ha
+          |   `-- types.ha
+          `-- logger
+              |-- README
+              |-- logger.ha
+              `-- types.ha
+#+END_SRC
+
+Then, it won't work:
+
+#+BEGIN_SRC bash
+  hare run
+  # Error: /home/wison/hare/temp: Module not found
+
+  hare run src/main.ha
+  # Error: /home/wison/hare/temp/src/main.ha: utils::hex: Module not found
+#+END_SRC
+
+
+You have to provide your =HAREPATH= to make it work:
+
+#+BEGIN_SRC bash
+  HAREPATH=./src:/usr/local/src/hare/stdlib hare run src/main.ha
+
+  # (I) [ Main > main ] - call 'do_something'.
+  # (D) [ Main > do_something ] - just a test:)
+  # (D) [ HexUtil > hex_from_string ] - get called.
+  # (D) [ Main > do_something ] - hex_buffer len: 4
+  # (D) [ HexUtil > hex_to_string ] - get called.
+  # (D) [ Main > do_something ] - HexBuffer to string works.
+  # (I) [ Main > main ] - call 'do_something' done.
+#+END_SRC
+
