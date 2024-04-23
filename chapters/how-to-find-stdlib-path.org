@@ -1,0 +1,6 @@
+* How to find =stdlib= path
+
+#+BEGIN_SRC bash
+  hare version -v | rg stdlib 
+  #        /usr/local/src/hare/stdlib
+#+END_SRC

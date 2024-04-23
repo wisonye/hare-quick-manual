@@ -1,0 +1,3 @@
+* Hare modules
+
+For more details, plz run =man hare-module=.
