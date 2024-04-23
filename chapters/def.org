@@ -1,6 +1,8 @@
 * =def=
 
-=def= declares a constant, for example:
+** =def= declares a constant
+
+For example:
 
 #+BEGIN_SRC hare
   // [[duration]] representing a single nanosecond.
@@ -10,3 +12,40 @@
 In this case, everywhere that =NANOSECOND= is used, it's substituted with =1=.
 
 It's not exactly a pre-processor, since it's not substituting lexical tokens or manipulating the AST directly or anything like that, but it behaves somewhat similarly to using =#define= for constants (except it's the evaluated expression that's substituted, not the tokens themselves like with C's pre-processor).
+
+
+** Override =def= constant by using =-D= flag
+
+For example, you have a =src/main.ha= looks like this:
+
+#+BEGIN_SRC hare
+  use fmt;
+
+  def BUFFER_SIZE: size = 10;
+  def GAP_BUFFER_SIZE: size = 20;
+
+  export fn main() void = {
+        fmt::printfln("BUFFER_SIZE: {}", BUFFER_SIZE)!;
+        fmt::printfln("GAP_BUFFER_SIZE: {}", GAP_BUFFER_SIZE)!;
+  };
+#+END_SRC
+
+So, you can run and use the default constant settings:
+
+#+BEGIN_SRC bash
+  hare run src/main.ha
+
+  # BUFFER_SIZE: 10
+  # GAP_BUFFER_SIZE: 20  
+#+END_SRC
+
+
+Or you're able to use =-D= to override the default constant settings:
+
+#+BEGIN_SRC bash
+  hare run -D BUFFER_SIZE:size=1024 -D GAP_BUFFER_SIZE:size=2048 src/main.ha
+
+  # BUFFER_SIZE: 1024
+  # GAP_BUFFER_SIZE: 2048
+#+END_SRC
+

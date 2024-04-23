@@ -1,5 +1,48 @@
 * Compiler related
 
+** Default environment variables
+
+#+BEGIN_SRC bash
+  ENVIRONMENT
+   The following environment variables affect hare build's execution:
+   HARECACHE     The path to the build cache. Defaults to
+                 $XDG_CACHE_HOME/hare, or ~/.cache/hare if $XDG_CACHE_HOME
+                 isn't set.
+   HAREPATH      The list of directories to search for module dependencies
+                 in. See hare-module(5).
+   NO_COLOR      Disables all color output when set to a non-empty string.
+   HAREC_COLOR   Disables color output for harec when set to 0, enables it
+                 when set to any other value. This overrides NO_COLOR.
+   HAREC         Name of the harec command to use.
+   HARECFLAGS    Additional flags to pass to harec.
+   QBE           Name of the qbe command to use.
+   QBEFLAGS      Additional flags to pass to qbe.
+   AR            Name of the ar(1) command to use.
+   ARFLAGS       Additional flags to pass to ar(1).
+   AS            Name of the as(1) command to use.
+   ASFLAGS       Additional flags to pass to as(1).
+   LD            Name of the ld(1) command to use.
+   LDLINKFLAGS   Additional flags to pass to ld(1).
+   CC            Name of the cc(1) command to use when linking external
+                 libraries.
+   LDFLAGS       Additional linker flags to pass to cc(1).
+#+END_SRC
+
+You can print some of them by running =hare version -v=:
+
+#+BEGIN_SRC bash
+  hare version -v
+
+ #  hare dev
+ #  build tags:
+ #          +aarch64
+ #          +openbsd
+ #  HAREPATH:
+ #          /usr/local/src/hare/stdlib
+ #          /usr/local/src/hare/third-party
+#+END_SRC
+
+
 ** what's happenning under the hood when running =hare build -o=?
 
 =Hare= doesn't have a pre-processor. The build process invokes (in order):
@@ -303,3 +346,15 @@ And now, build the binaryand print the =color_to_string= from the symbol table:
   objdump -t ./out/main_bin | rg color_to_string 
 #+END_SRC
  
+
+
+** Cross compliationn
+
+*** Supported architectures by =-a=:
+
+ •   aarch64
+ •   riscv64
+ •   x86_64
+
+
+*** Example
