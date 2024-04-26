@@ -9,6 +9,7 @@
 *** [[file:chapters/for-loop.org][for-loop]]
 *** [[file:chapters/switch.org][switch]]
 *** [[file:chapters/match.org][match]]
+** Array and slice
 ** String
 *** [[file:chapters/manipulate-strings.org][Manipulate strings]]
 *** String format

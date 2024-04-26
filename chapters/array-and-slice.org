@@ -1,0 +1,274 @@
+* Array and slice
+
+** Overview
+
+=Array= (=[X]T=) is fixed in size =X= and compile time size known.
+
+=Slice= (=[]T=) is grow-able size and runtime size known, you can treat it as a dynamic array.
+
+Here is the internal =slice= type:
+
+#+BEGIN_SRC bash
+  haredoc types::slice
+
+  # // A type representing the internal structure of slices, useful for low-level
+  # // slice manipulation.
+  # type slice = struct {
+  #         // The slice contents.
+  #         data: nullable *opaque,
+  #         // The number of members of the slice.
+  #         length: size,
+  #         // The allocated capacity (in members) of data.
+  #         capacity: size,
+  # };
+#+END_SRC
+
+As you see, it's a very regular dynamic-arry/vector struct implementation.
+
+
+** Array (=[X]T=) can be converted to slice (=[]T=) automatically
+
+=array -> slice=
+=&array -> slice=
+=*array -> slice=
+
+#+BEGIN_SRC hare
+  //
+  // Function that accepts a slice
+  //
+  fn print_array(arr: []u8) void = {};
+
+  //
+  // Fixed size array
+  //
+  const arr = [0x01u8, 0x02, 0x03];
+
+  // Pointer to an array
+  const arr_ptr: *[3]u8 = &arr;
+
+  //
+  // Array converts to slice
+  //
+  print_array(arr);
+  print_array(&arr);
+  print_array(arr_ptr);
+#+END_SRC
+
+
+** How to prove a slice is just a pointer to an array but not an entire copy
+
+#+BEGIN_SRC hare
+  type slice = struct {
+          // The slice contents.
+          data: nullable *opaque,
+          // The number of members of the slice.
+          length: size,
+          // The allocated capacity (in members) of data.
+          capacity: size,
+  };
+#+END_SRC
+
+
+*** Slice's internal data address should be the same as array's address
+
+So, you can print out the array's address and slice's internal data address to prove that.
+
+#+BEGIN_SRC hare
+  use types;
+
+  const arr = [0x01u8, 0x02, 0x03];
+
+  //
+  // Slice from `arr`
+  //
+  let slice: []u8 = arr[..];
+  //
+  // Try to get back the slice's data (`nullable *oqaque`)
+  //
+  let slice_interal_data = (&slice: *types::slice).data;
+
+  fmt::printfln(">>> arr address: {}", &arr)!;
+  fmt::printfln(">>> slice address: {}", &slice)!;
+  fmt::printfln(">>> slice internal address: {}", slice_interal_data)!;
+  fmt::printfln(">>> arr address == slice internal address: {}", &arr == slice_interal_data)!;
+#+END_SRC
+
+
+Output:
+
+#+BEGIN_SRC bash
+  >>> arr address: 0x695973482c              # Same
+  >>> slice address: 0x69597349b0
+  >>> slice internal address: 0x695973482c   # Same
+  >>> arr address == slice internal address: true
+#+END_SRC
+
+
+
+*** Modify underlying array will affect its slice
+
+#+BEGIN_SRC hare
+  // Change underlying array value
+  arr[1] = 0xFF;
+
+  fmt::printfln(">>> slice len: {}, value:", len(slice))!;
+  for( let index=0z; index < len(slice); index +=1) {
+          fmt::printfln(">>> slice[{}]: 0x{:X}", index, slice[index])!;
+  };
+#+END_SRC
+
+Output:
+
+#+BEGIN_SRC bash
+  >>> slice len: 3, value:
+  >>> slice[0]: 0x1
+  >>> slice[1]: 0xFF  # If array changes, then slice changes.
+  >>> slice[2]: 0x3
+#+END_SRC
+
+
+** Automatic dereference when accessing slice by index
+
+#+BEGIN_SRC hare
+  const arr = [0x01u8, 0x02, 0x03];
+
+  //
+  // A pointer to a slice
+  //
+  let slice: *[]u8 = &arr[..];
+
+  //
+  // You don't need to to `(*slice)[1]`
+  //
+  // const a = (*slice)[1];
+  const a = slice[1];
+  fmt::printfln(">>> a: {}", a)!;
+#+END_SRC
+
+
+** Manipulate growable slice by using =append, insert, and delete=
+
+You CAN'T manipulate a slice that converts from a fixed array, as the underlying array is fixed-size, non-growable!!!
+
+That's why the following code won't work!!!
+
+#+BEGIN_SRC hare
+  //
+  // slice converts from array is non-growable!!!
+  //
+  let slice: []u8 = arr[..];
+  let slice: []u8 = [1, 2, 3, 4];
+
+  // This will crash!!!
+  delete(slice[0]);
+  append(slice, 0xCC);
+#+END_SRC
+
+
+There are 2 ways to manipulate growable slices:
+
+*** Heap-allocated slice
+
+**** Create empty heap-allocated slice (capacity is 0)
+
+#+BEGIN_SRC hare
+  let slice: []u8 = [];
+  defer free(slice);
+  fmt::printfln(">>> slice capacity: {}",  (&slice: *types::slice).capacity)!;
+
+  append(slice, 0xCC);
+  append(slice, 0xDD);
+  append(slice, 0xEE);
+  append(slice, 0xFF);
+  delete(slice[0]);       // Remove 0xCC
+  insert(slice[0], 0xAA); // Insert 0xAA
+#+END_SRC
+
+
+Output:
+
+#+BEGIN_SRC bash
+  >>> slice capacity: 0
+  >>> [ print_slice ] - len: 4, value: 
+  >>>	slice[0]: 0xAA
+  >>>	slice[1]: 0xDD
+  >>>	slice[2]: 0xEE
+  >>>	slice[3]: 0xFF
+#+END_SRC
+
+
+**** Create heap-allocated slice (capacity is pre-allocated)
+
+*****  =let slice: []u8 = alloc([], 5);=
+
+Allocated empty slice on the heap, capacity to =5=, len is =0=.
+
+#+BEGIN_SRC hare
+  let slice: []u8 = alloc([], 5);
+  defer free(slice);
+  fmt::printfln(">>> slice capacity: {}",  (&slice: *types::slice).capacity)!;
+
+  print_slice(slice);
+#+END_SRC
+
+
+Output:
+
+#+BEGIN_SRC bash
+  >>> slice capacity: 5
+  >>> [ print_slice ] - len: 0, value: 
+#+END_SRC
+
+
+*****  =let slice: []u8 = alloc([0...], 5);=
+
+Allocated initialized slice on the heap, capacity to =5=, len is =5=, filled with =0=.
+
+#+BEGIN_SRC hare
+  let slice: []u8 = alloc([0...], 5);
+  // let slice: []u8 = alloc([0xFF...], 5); // Fill with 0xFF
+  defer free(slice);
+  fmt::printfln(">>> slice capacity: {}",  (&slice: *types::slice).capacity)!;
+
+  print_slice(slice);
+#+END_SRC
+
+
+Output:
+
+#+BEGIN_SRC bash
+  >>> slice capacity: 5
+  >>> [ print_slice ] - len: 5, value: 
+  >>>	slice[0]: 0x0
+  >>>	slice[1]: 0x0
+  >>>	slice[2]: 0x0
+  >>>	slice[3]: 0x0
+  >>>	slice[4]: 0x0
+#+END_SRC
+
+
+*****  =let slice: []u8 = alloc([0xAA, 0xBB, 0xCC]);=
+
+Allocated initialized slice on the heap, capacity to =3=, len is =3=, init with give values: =0xAA, 0xBB, 0xCC=.
+
+#+BEGIN_SRC hare
+  let slice: []u8 = alloc([0xAA, 0xBB, 0xCC]);
+  defer free(slice);
+  fmt::printfln(">>> slice capacity: {}",  (&slice: *types::slice).capacity)!;
+
+  print_slice(slice);
+#+END_SRC
+
+
+Output:
+
+#+BEGIN_SRC bash
+  >>> slice capacity: 3
+  >>> [ print_slice ] - len: 3, value: 
+  >>>	slice[0]: 0xAA
+  >>>	slice[1]: 0xBB
+  >>>	slice[2]: 0xCC
+#+END_SRC
+
+
+*** Stack-allocated slice (static slice)

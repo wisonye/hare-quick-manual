@@ -23,8 +23,8 @@
 | =never=            |                      | use as result type of expression which are guaranteed to never return to caller |
 | =null=             | =null_t=               | NULL pointer                                                                    |
 | =void=             | =void=                 |                                                                                 |
-| =nullable *opaque= | =*void=                |                                                                                 |
-
+| =*opaque=          | =*void=                | Void pointer but can't be null                                                  |
+| =nullable *opaque= | =*void=                | Nullable void pointer                                                           |
 
 
 ** Integer value range
