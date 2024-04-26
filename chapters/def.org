@@ -49,3 +49,20 @@ Or you're able to use =-D= to override the default constant settings:
   # GAP_BUFFER_SIZE: 2048
 #+END_SRC
 
+
+** Override module =def= constant by using =-D= flag
+
+- You have to give the full module-scoped ident to =-D=
+
+- If the value is =str= type, you have to handle ="= escaping.
+
+
+For example:
+
+#+BEGIN_SRC bash
+  HAREPATH=~/hare/temp/src:/usr/local/share/hare/stdlib \
+      hare run \
+      -D utils::logger::MODULE_NAME:str=\"HHH\" \
+      -D utils::hex::MODULE_NAME:str=\"MyHex\" \
+      ~/hare/temp/src/main.ha
+#+END_SRC
