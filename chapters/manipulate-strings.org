@@ -328,7 +328,7 @@ Output:
 
 ** String from =char= slice and back to =char= slice
 
-=-torunes= -> =free=
+=torunes= -> =free=
 =fromrunes= -> =free=
 
 #+BEGIN_SRC hare

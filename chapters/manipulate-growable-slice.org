@@ -1,0 +1,131 @@
+* Manipulate growable slice by using =append, insert, and delete=
+
+You CAN'T manipulate a slice that converts from a fixed array, as the underlying array is fixed-size, non-growable!!!
+
+That's why the following code won't work!!!
+
+#+BEGIN_SRC hare
+  //
+  // slice converts from array is non-growable!!!
+  //
+  let slice: []u8 = arr[..];
+  let slice: []u8 = [1, 2, 3, 4];
+
+  // This will crash!!!
+  delete(slice[0]);
+  insert(slice[0], 0xFF);
+  append(slice, 0xCC);
+#+END_SRC
+
+
+There are 2 ways to manipulate a growable slice:
+
+** Heap-allocated slice
+
+*** Create a empty heap-allocated slice (capacity is 0)
+
+#+BEGIN_SRC hare
+  //
+  // Empty and heap-allocated growable slice,
+  // that's you should `free` it.
+  let slice: []u8 = [];
+  defer free(slice);
+
+  fmt::printfln(">>> slice capacity: {}",  (&slice: *types::slice).capacity)!;
+
+  append(slice, 0xCC);
+  append(slice, 0xDD);
+  append(slice, 0xEE);
+  append(slice, 0xFF);
+  delete(slice[0]);       // Remove 0xCC
+  insert(slice[0], 0xAA); // Insert 0xAA
+#+END_SRC
+
+
+Output:
+
+#+BEGIN_SRC bash
+  >>> slice capacity: 0
+  >>> [ print_slice ] - len: 4, value: 
+  >>>	slice[0]: 0xAA
+  >>>	slice[1]: 0xDD
+  >>>	slice[2]: 0xEE
+  >>>	slice[3]: 0xFF
+#+END_SRC
+
+
+*** Create a heap-allocated slice (capacity is pre-allocated)
+
+****  =let slice: []u8 = alloc([], 5);=
+
+Allocate a empty slice on the heap, capacity to =5=, len is =0=.
+
+#+BEGIN_SRC hare
+  let slice: []u8 = alloc([], 5);
+  defer free(slice);
+  fmt::printfln(">>> slice capacity: {}",  (&slice: *types::slice).capacity)!;
+
+  print_slice(slice);
+#+END_SRC
+
+
+Output:
+
+#+BEGIN_SRC bash
+  >>> slice capacity: 5
+  >>> [ print_slice ] - len: 0, value: 
+#+END_SRC
+
+
+****  =let slice: []u8 = alloc([0...], 5);=
+
+Allocate a initialized slice on the heap, capacity to =5=, len is =5=, filled with the given value (=0=).
+
+#+BEGIN_SRC hare
+  let slice: []u8 = alloc([0...], 5);
+  // let slice: []u8 = alloc([0xFF...], 5); // Fill with 0xFF
+  defer free(slice);
+  fmt::printfln(">>> slice capacity: {}",  (&slice: *types::slice).capacity)!;
+
+  print_slice(slice);
+#+END_SRC
+
+
+Output:
+
+#+BEGIN_SRC bash
+  >>> slice capacity: 5
+  >>> [ print_slice ] - len: 5, value: 
+  >>>	slice[0]: 0x0
+  >>>	slice[1]: 0x0
+  >>>	slice[2]: 0x0
+  >>>	slice[3]: 0x0
+  >>>	slice[4]: 0x0
+#+END_SRC
+
+
+****  =let slice: []u8 = alloc([0xAA, 0xBB, 0xCC]);=
+
+Allocate a initialized slice on the heap, capacity to =3=, len is =3=, init with given values: =0xAA, 0xBB, 0xCC=.
+
+#+BEGIN_SRC hare
+  let slice: []u8 = alloc([0xAA, 0xBB, 0xCC]);
+  defer free(slice);
+  fmt::printfln(">>> slice capacity: {}",  (&slice: *types::slice).capacity)!;
+
+  print_slice(slice);
+#+END_SRC
+
+
+Output:
+
+#+BEGIN_SRC bash
+  >>> slice capacity: 3
+  >>> [ print_slice ] - len: 3, value: 
+  >>>	slice[0]: 0xAA
+  >>>	slice[1]: 0xBB
+  >>>	slice[2]: 0xCC
+#+END_SRC
+
+
+** Stack-allocated slice (static slice)
