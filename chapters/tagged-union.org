@@ -1,5 +1,7 @@
 * Tagged union
 
+** Tagged union by example
+
 Here is the tagged union example:
 
 #+BEGIN_SRC hare
@@ -89,4 +91,37 @@ Output:
   >>> query_result: Request is failed
   >>> query_result: Request is unknown
   >>> query_result: Request is unknown
+#+END_SRC
+
+
+** Tagged union type test (=is=) and type conversion (=as=)
+
+#+BEGIN_SRC hare
+  //
+  // Tagged union
+  //
+  let value: (u8 | str) = "Hello:)";
+  // let value: (u8 | str) = 0xFF;
+
+  //
+  // Tagged union type test and type conversion
+  //
+  if (value is str) {
+          fmt::printfln(">>> value is str - len:{}, value: {}",
+                  len(value as str),
+                  value as str)!;
+  } else {
+          fmt::printfln(">>> value is u8: 0x{:X}", value as u8)!;
+  };
+
+  //
+  // Use `match` instead of `if else`, same result
+  //
+  match (value) {
+          case let v: str =>
+                  fmt::printfln(">>> value is str - len:{}, value: {}",
+                          len(v), v)!;
+          case let v: u8 =>
+                  fmt::printfln(">>> value is u8: 0x{:X}", v)!;
+  };
 #+END_SRC
