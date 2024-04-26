@@ -1,0 +1,365 @@
+* Manipulate strings
+
+=strings= module provides support functions for working with =Hare= strings.
+
+** Equals check
+
+#+BEGIN_SRC hare
+  use strings;
+
+  const string = "Hello";
+  fmt::printfln(">>> string == 'Hello': {}", string == "Hello")!;
+  fmt::printfln(">>> string == 'Hello': {}", strings::compare(string, "Hello") == 0)!;
+#+END_SRC
+
+
+** Searching (conatin)
+
+#+BEGIN_SRC hare
+  use strings;
+  const string = "Hello world from Hare:)";
+  fmt::printfln(">>> string contians 'world': {}", strings::contains(string, "world"))!;
+  fmt::printfln(">>> string contians 'world': {}", strings::contains(string, " world"))!;
+  fmt::printfln(">>> string contians 'world': {}", strings::contains(string, "world "))!;
+  fmt::printfln(">>> string contians 'world': {}", strings::contains(string, " world "))!;
+#+END_SRC
+
+
+** Indexing, start with and end with
+
+=byteindex=: Find byte-wise (not utf-8) index forward
+=index=: Find index forward
+=rindex=: Find index backward
+=hasprefix=: Check end with
+=hassuffix=: Check start with
+
+#+BEGIN_SRC hare
+  use strings;
+
+  //
+  // Find index forward
+  //
+  const string = "Hello world from Hare:)";
+  const found_index = match (strings::index(string, "xxx")) {
+    case let index: size => yield index;
+    case void => yield -1;
+  };
+  fmt::printfln(">>> found_index: {}", found_index)!; // -1
+
+  const found_index = match (strings::index(string, "world")) {
+    case let index: size => yield index;
+    case void => yield -1;
+  };
+  fmt::printfln(">>> found_index: {}", found_index)!; // 6
+
+  //
+  // Find index backword
+  //
+  const string = "111 222 111 333";
+  const found_index = match (strings::byteindex(string, "111")) {
+    case let index: size => yield index;
+    case void => yield -1;
+  };
+  fmt::printfln(">>> found_index: {}", found_index)!; // 0
+
+  const found_index = match (strings::rindex(string, "111")) {
+    case let index: size => yield index;
+    case void => yield -1;
+  };
+  fmt::printfln(">>> found_index: {}", found_index)!; // 8
+
+  //
+  // Check start with and end with
+  //
+  const string = "111 222 111 333";
+  fmt::printfln(">>> start with 111: {}", strings::hasprefix(string, "111"))!;
+  fmt::printfln(">>> end with 333: {}", strings::hassuffix(string, "333"))!;
+#+END_SRC
+
+
+** Trim and concat
+
+=ltrim=, =rtrim=, =trim=
+
+=concat= -> =free=
+
+#+BEGIN_SRC hare
+  use strings;
+
+  //
+  // Trim
+  //
+  const string = " Hello world from Hare:) ";
+  fmt::printfln(">>> string, len: {}, value: {}", len(string), string)!;
+
+  const string = strings::trim(string);
+  fmt::printfln(">>> string, len: {}, value: {}", len(string), string)!;
+
+
+  //
+  // Concat, MAKE SURE to free the return str!!!
+  //
+  const string = "Hello";
+  const string = strings::concat(string, " world", " from", " hare", " :)");
+  defer free(string);
+
+#+END_SRC
+
+
+** Duplicate (copy) a single string and string array/slice
+
+=dup= -> =free=
+=dupall= -> =freeall=
+
+#+BEGIN_SRC hare
+  use strings;
+
+  //
+  // Copy/Duplicate, MAKE SURE to free the return str!!!
+  //
+  const string = "Hello";
+  const string2 = strings::dup(string);
+  defer free(string2);
+  const string_arr = [
+          "111",
+          "222",
+          "333",
+          "444",
+  ];
+
+  //
+  // Copy/Duplicate all strings, MAKE SURE to free the return slice!!!
+  //
+  const string_arr_copied = strings::dupall(string_arr);
+  defer strings::freeall(string_arr_copied);
+
+  for( let index=0z; index < len(string_arr); index +=1) {
+          fmt::printfln(">>> string_arr_copied[{}]: {}", index, string_arr_copied[index])!;
+  };
+#+END_SRC
+
+
+** Join string together with delimiter
+
+=join= -> =free=
+
+#+BEGIN_SRC hare
+  const string = "111";
+  const string2 = "222";
+  const string3= "333";
+  const string4 = "4444";
+
+  //
+  // Make sure to free the return string!!!
+  //
+  const final_string = strings::join(",", string, string2, string3, string4);
+  defer free(final_string);
+  fmt::printfln(">>> final_string: {}", final_string)!;
+#+END_SRC
+
+
+** Add padding to fill spaces
+
+=lpad= and =rpad= -> =free=
+
+#+BEGIN_SRC hare
+  const string = "FF";
+  const left_padding_string = strings::lpad(string, '0', 10);
+  const right_padding_string = strings::rpad(string, '0', 10);
+  defer free(left_padding_string);
+  defer free(right_padding_string);
+  fmt::printfln(">>> left_padding_string, len: {}, value: {}", len(left_padding_string), left_padding_string)!;
+  fmt::printfln(">>> right_padding_string, len: {}, value: {}", len(right_padding_string), right_padding_string)!;
+#+END_SRC
+
+Output:
+
+#+BEGIN_SRC bash
+  >>> left_padding_string, len: 10, value: 00000000FF
+  >>> right_padding_string, len: 10, value: FF00000000
+#+END_SRC
+
+
+** Replace string
+
+=repalce= -> =free=
+=multireplace= -> =free=
+
+#+BEGIN_SRC hare
+  const string = "111 222 333 444";
+  const replaced_string = strings::replace(string, " ", ",");
+  defer free(replaced_string);
+  fmt::printfln(">>> replaced_string, len: {}, value: {}", len(replaced_string), replaced_string)!;
+#+END_SRC
+
+
+** Get the substring
+
+#+BEGIN_SRC hare
+  const string = "Hello world from Hare:)";
+
+  const sub_string = strings::sub(string, 0, strings::end);
+  fmt::printfln(">>> sub_string: {}", sub_string)!;
+
+  const sub_string = strings::sub(string, 6, strings::end);
+  fmt::printfln(">>> sub_string: {}", sub_string)!;
+
+  const sub_string = strings::sub(string, 6, 11); // final position: end - 1
+  fmt::printfln(">>> sub_string: {}", sub_string)!;
+#+END_SRC
+
+
+Output:
+
+#+BEGIN_SRC bash
+  >>> sub_string: Hello world from Hare:)
+  >>> sub_string: world from Hare:)
+  >>> sub_string: world
+#+END_SRC
+
+
+** split
+
+#+BEGIN_SRC hare
+  const string = "Hello world from Hare:)";
+  const str_arr = strings::split(string, " ");
+  defer free(str_arr);
+
+  fmt::printfln(">>> str_arr, len: {}, value:", len(str_arr))!;
+  for( let index=0z; index < len(str_arr); index +=1) {
+          fmt::printfln(">>> str_arr[{}]: {}", index, str_arr[index])!;
+  };
+
+  //
+  // If `delimiter` doesn't exists, it still returns a single element array
+  //
+  const str_arr_2 = strings::split(string, ",");
+  defer free(str_arr_2);
+
+  fmt::printfln(">>> str_arr_2, len: {}, value:", len(str_arr_2))!;
+  for( let index=0z; index < len(str_arr_2); index +=1) {
+          fmt::printfln(">>> str_arr_2[{}]: {}", index, str_arr_2[index])!;
+  };
+#+END_SRC
+
+
+Output:
+
+#+BEGIN_SRC bash
+  >>> str_arr, len: 4, value:
+  >>> str_arr[0]: Hello
+  >>> str_arr[1]: world
+  >>> str_arr[2]: from
+  >>> str_arr[3]: Hare:)
+  >>> str_arr_2, len: 1, value:
+  >>> str_arr_2[0]: Hello world from Hare:)
+#+END_SRC
+
+
+** String from bytes and back to bytes
+
+=toutf8=, =fromutf8= and =fromutf8_unsafe= doesn't return =rune= (char)!!!
+
+If you want to get a single =rune= char, use =torune= instead!!!
+
+#+BEGIN_SRC hare
+  use strings;
+  use encoding::utf;
+
+  //
+  // String -> []u8
+  //
+  const string = "Hello world from Hare:)";
+  const chars = strings::toutf8(string);
+  for( let index=0z; index < len(chars); index +=1) {
+          fmt::printfln(">>> chars[{}]: {}", index, chars[index])!;
+  };
+
+  //
+  // []u8 -> String, safe version
+  //
+  const back_to_string = match (strings::fromutf8(chars)) {
+        case let v: str => yield v;
+        case utf8::invalid=> {
+             fmt::printfln("'fromutf8' failed.")!;
+             return;
+        };
+  };
+  fmt::printfln(">>> back_to_string: {}", back_to_string)!;
+
+  //
+  // []u8 -> String, unsafe version will cause undefined behavior if failed!!!
+  //
+  // const back_to_string_2 = strings::fromutf8_unsafe([0xFF, 0xAA]);
+  const back_to_string_2 = strings::fromutf8_unsafe(chars);
+  fmt::printfln(">>> back_to_string_2: {}", back_to_string_2)!;
+#+END_SRC
+
+Output:
+
+#+BEGIN_SRC bash
+  >>> chars[0]: 72
+  >>> chars[1]: 101
+  >>> chars[2]: 108
+  >>> chars[3]: 108
+  >>> chars[4]: 111
+  >>> chars[5]: 32
+  >>> chars[6]: 119
+  >>> chars[7]: 111
+  >>> chars[8]: 114
+  >>> chars[9]: 108
+  >>> chars[10]: 100
+  >>> chars[11]: 32
+  >>> chars[12]: 102
+  >>> chars[13]: 114
+  >>> chars[14]: 111
+  >>> chars[15]: 109
+  >>> chars[16]: 32
+  >>> chars[17]: 72
+  >>> chars[18]: 97
+  >>> chars[19]: 114
+  >>> chars[20]: 101
+  >>> chars[21]: 58
+  >>> chars[22]: 41
+  >>> back_to_string: Hello world from Hare:)
+  >>> back_to_string_2: Hello world from Hare:)
+#+END_SRC
+
+
+** String from =char= slice and back to =char= slice
+
+=-torunes= -> =free=
+=fromrunes= -> =free=
+
+#+BEGIN_SRC hare
+
+  const string = "ABCD12345";
+  const chars = strings::torunes(string);
+  defer free(chars);
+
+  fmt::printfln(">>> chars len: {}, value:", len(chars))!;
+  for( let index=0z; index < len(chars); index +=1) {
+          fmt::printfln(">>> chars[{}]: {}", index, chars[index])!;
+  };
+
+  const back_to_string = strings::fromrunes(chars);
+  defer free(back_to_string);
+  fmt::printfln(">>> back_to_string, len: {}, value: {}", len(back_to_string), back_to_string)!;
+#+END_SRC
+
+
+Output:
+
+#+BEGIN_SRC bash
+  >>> chars len: 9, value:
+  >>> chars[0]: A
+  >>> chars[1]: B
+  >>> chars[2]: C
+  >>> chars[3]: D
+  >>> chars[4]: 1
+  >>> chars[5]: 2
+  >>> chars[6]: 3
+  >>> chars[7]: 4
+  >>> chars[8]: 5
+  >>> back_to_string, len: 9, value: ABCD12345
+#+END_SRC

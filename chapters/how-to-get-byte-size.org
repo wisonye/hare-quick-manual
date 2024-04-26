@@ -1,0 +1,55 @@
+* How to get byte size
+
+Use =size=:
+
+#+BEGIN_SRC hare
+  export fn main() void = {
+          fmt::printfln(">>> u8 size: {}", size(u8))!;
+
+          fmt::printfln(">>> int size: {}", size(int))!;
+          fmt::printfln(">>> uint size: {}", size(uint))!;
+
+          fmt::printfln(">>> size size: {}", size(size))!;
+          fmt::printfln(">>> uintptr size: {}", size(uintptr))!;
+
+          fmt::printfln(">>> f32 size: {}", size(f32))!;
+          fmt::printfln(">>> f64 size: {}", size(f64))!;
+
+          fmt::printfln(">>> [5]int size: {}", size([5]int))!;
+          fmt::printfln(">>> []int size: {}", size([]int))!; // `[]T` (slice) is a struct
+
+          fmt::printfln(">>> *u8 size: {}", size(*u8))!;
+          fmt::printfln(">>> void size: {}", size(void))!;
+          fmt::printfln(">>> *opaque (*void) size: {}", size(*opaque))!;
+          fmt::printfln(">>> nullable *opaque (*void) size: {}", size(nullable *opaque))!;
+
+          fmt::printfln(">>> str size: {}", size(str))!;
+
+          fmt::printfln(">>> struct size: {}", size(struct {
+                  first_name: str,
+                  last_name: str,
+                  age: u8
+          }))!;
+  };
+#+END_SRC
+
+
+Output:
+
+#+BEGIN_SRC bash
+  >>> u8 size: 1
+  >>> int size: 4
+  >>> uint size: 4
+  >>> size size: 8
+  >>> uintptr size: 8
+  >>> f32 size: 4
+  >>> f64 size: 8
+  >>> [5]int size: 20
+  >>> []int size: 24
+  >>> *u8 size: 8
+  >>> void size: 0
+  >>> *opaque (*void) size: 8
+  >>> nullable *opaque (*void) size: 8
+  >>> str size: 24
+  >>> struct size: 56
+#+END_SRC

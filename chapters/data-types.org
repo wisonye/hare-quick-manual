@@ -23,10 +23,8 @@
 | =never=            |                      | use as result type of expression which are guaranteed to never return to caller |
 | =null=             | =null_t=               | NULL pointer                                                                    |
 | =void=             | =void=                 |                                                                                 |
-| =type=             | (none)               | the type of types                                                               |
-| =anyerror=         | (none)               | an error code                                                                   |
-| =comptime_int=     | (none)               | Only allowed for comptime-known values. The type of integer literals.           |
-| =comptime_float=   | (none)               | Only allowed for comptime-known values. The type of float literals.             |
+| =nullable *opaque= | =*void=                |                                                                                 |
+
 
 
 ** Integer value range

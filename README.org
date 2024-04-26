@@ -9,12 +9,16 @@
 *** [[file:chapters/for-loop.org][for-loop]]
 *** [[file:chapters/switch.org][switch]]
 *** [[file:chapters/match.org][match]]
+** String
+*** [[file:chapters/manipulate-strings.org][Manipulate strings]]
+*** String format
 ** [[file:chapters/error-handling.org][Error handling]]
 ** [[file:chapters/hare-modules.org][Hare modules]]
 ** [[file:chapters/compiler-related.org][Compiler related]]
 ** Working with C
 ** 24. How to
 *** [[file:chapters/how-to-find-stdlib-path.org][Find the stdlib path]]
+*** [[file:chapters/how-to-get-byte-size.org][Get byte size]]
 *** Read environment variable
 *** Read process arguments
 *** Execute command
