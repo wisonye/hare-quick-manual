@@ -1,4 +1,4 @@
-* Array and slice
+* Slice basics
 
 ** Overview
 
@@ -25,8 +25,10 @@ Here is the internal =slice= type:
 
 As you see, it's a very regular dynamic-arry/vector struct implementation.
 
+But if you create a slice from an array, the slice is non-growable, it is just another form to access the parent array!!!
 
-** Array (=[X]T=) can be converted to slice (=[]T=) automatically
+
+** Array (=[X]T=) can be converted to slice (=[]T=) automatically in the following situations
 
 =array -> slice=
 =&array -> slice=
@@ -55,7 +57,88 @@ As you see, it's a very regular dynamic-arry/vector struct implementation.
 #+END_SRC
 
 
-** How to prove a slice is just a pointer to an array but not an entire copy
+** Slice from an array is non-growable by using =append/insert/delete=!!!
+
+#+BEGIN_SRC hare
+  const arr = [1u8, 2, 3, 4];
+  let slice: []u8 = arr;
+
+  //
+  // None of these work!!!
+  //
+  insert(slice[0], 0xFF);
+  // append(slice, 0xFF);
+  // delete(slice[0]);
+#+END_SRC
+
+Error output:
+
+#+BEGIN_SRC bash
+  main.ha(59531) in realloc(): bogus pointer (double free?) 0x7376e806e8
+  Abort trap (core dumped)  
+#+END_SRC
+
+
+If you want a growable slice, read the next chapter.
+
+
+** How to get back the underlying =types::slice= type
+
+Internal type definition:
+
+#+BEGIN_SRC hare
+  type slice = struct {
+          // The slice contents.
+          data: nullable *opaque,
+          // The number of members of the slice.
+          length: size,
+          // The allocated capacity (in members) of data.
+          capacity: size,
+  };
+#+END_SRC
+
+Even though, you can't convert a slice (instance) into =types::slice= (struct type) directly!!!
+
+For example:
+
+#+BEGIN_SRC hare
+  const arr = [1u8, 2, 3, 4];
+  const slice: []u8 = arr;
+
+  // This is NOT allowed!!!
+  const underlying_slice = slice: types::slice;
+#+END_SRC
+
+Output error:
+
+#+BEGIN_SRC bash
+  temp/src/main.ha:27:46: error: Invalid cast from const []u8 to types::slice
+
+  27 |            const underlying_slice = slice: types::slice;
+#+END_SRC
+
+But you can convert a =*[]T= back to =*types::slice=, this allows you to access the underlying slice struct fields:
+
+#+BEGIN_SRC hare
+  const arr = [1u8, 2, 3, 4];
+  const slice: []u8 = arr;
+
+  // Convert `*[]T` to `*types::slice`
+  const slice_ptr = &slice: *types::slice;
+  fmt::printfln(">>> slice - capacity: {}, len: {}, data ptr: {}",-
+         slice_ptr.capacity,
+         slice_ptr.length,
+         slice_ptr.data)!;
+#+END_SRC
+
+Output:
+
+#+BEGIN_SRC bash
+  >>> slice - capacity: 4, len: 4, data ptr: 0x797579fbe0  
+#+END_SRC
+
+
+** How to prove a slice is just holding a pointer to an array but not an entire copy
 
 #+BEGIN_SRC hare
   type slice = struct {
@@ -85,6 +168,7 @@ So, you can print out the array's address and slice's internal data address to p
   //
   // Try to get back the slice's data (`nullable *oqaque`)
   //
+  // let slice_interal_data = (*(&slice: *types::slice)).data;
   let slice_interal_data = (&slice: *types::slice).data;
 
   fmt::printfln(">>> arr address: {}", &arr)!;
@@ -145,130 +229,3 @@ Output:
   fmt::printfln(">>> a: {}", a)!;
 #+END_SRC
 
-
-** Manipulate growable slice by using =append, insert, and delete=
-
-You CAN'T manipulate a slice that converts from a fixed array, as the underlying array is fixed-size, non-growable!!!
-
-That's why the following code won't work!!!
-
-#+BEGIN_SRC hare
-  //
-  // slice converts from array is non-growable!!!
-  //
-  let slice: []u8 = arr[..];
-  let slice: []u8 = [1, 2, 3, 4];
-
-  // This will crash!!!
-  delete(slice[0]);
-  append(slice, 0xCC);
-#+END_SRC
-
-
-There are 2 ways to manipulate growable slices:
-
-*** Heap-allocated slice
-
-**** Create empty heap-allocated slice (capacity is 0)
-
-#+BEGIN_SRC hare
-  let slice: []u8 = [];
-  defer free(slice);
-  fmt::printfln(">>> slice capacity: {}",  (&slice: *types::slice).capacity)!;
-
-  append(slice, 0xCC);
-  append(slice, 0xDD);
-  append(slice, 0xEE);
-  append(slice, 0xFF);
-  delete(slice[0]);       // Remove 0xCC
-  insert(slice[0], 0xAA); // Insert 0xAA
-#+END_SRC
-
-
-Output:
-
-#+BEGIN_SRC bash
-  >>> slice capacity: 0
-  >>> [ print_slice ] - len: 4, value: 
-  >>>	slice[0]: 0xAA
-  >>>	slice[1]: 0xDD
-  >>>	slice[2]: 0xEE
-  >>>	slice[3]: 0xFF
-#+END_SRC
-
-
-**** Create heap-allocated slice (capacity is pre-allocated)
-
-*****  =let slice: []u8 = alloc([], 5);=
-
-Allocated empty slice on the heap, capacity to =5=, len is =0=.
-
-#+BEGIN_SRC hare
-  let slice: []u8 = alloc([], 5);
-  defer free(slice);
-  fmt::printfln(">>> slice capacity: {}",  (&slice: *types::slice).capacity)!;
-
-  print_slice(slice);
-#+END_SRC
-
-
-Output:
-
-#+BEGIN_SRC bash
-  >>> slice capacity: 5
-  >>> [ print_slice ] - len: 0, value: 
-#+END_SRC
-
-
-*****  =let slice: []u8 = alloc([0...], 5);=
-
-Allocated initialized slice on the heap, capacity to =5=, len is =5=, filled with =0=.
-
-#+BEGIN_SRC hare
-  let slice: []u8 = alloc([0...], 5);
-  // let slice: []u8 = alloc([0xFF...], 5); // Fill with 0xFF
-  defer free(slice);
-  fmt::printfln(">>> slice capacity: {}",  (&slice: *types::slice).capacity)!;
-
-  print_slice(slice);
-#+END_SRC
-
-
-Output:
-
-#+BEGIN_SRC bash
-  >>> slice capacity: 5
-  >>> [ print_slice ] - len: 5, value: 
-  >>>	slice[0]: 0x0
-  >>>	slice[1]: 0x0
-  >>>	slice[2]: 0x0
-  >>>	slice[3]: 0x0
-  >>>	slice[4]: 0x0
-#+END_SRC
-
-
-*****  =let slice: []u8 = alloc([0xAA, 0xBB, 0xCC]);=
-
-Allocated initialized slice on the heap, capacity to =3=, len is =3=, init with give values: =0xAA, 0xBB, 0xCC=.
-
-#+BEGIN_SRC hare
-  let slice: []u8 = alloc([0xAA, 0xBB, 0xCC]);
-  defer free(slice);
-  fmt::printfln(">>> slice capacity: {}",  (&slice: *types::slice).capacity)!;
-
-  print_slice(slice);
-#+END_SRC
-
-
-Output:
-
-#+BEGIN_SRC bash
-  >>> slice capacity: 3
-  >>> [ print_slice ] - len: 3, value: 
-  >>>	slice[0]: 0xAA
-  >>>	slice[1]: 0xBB
-  >>>	slice[2]: 0xCC
-#+END_SRC
-
-
-*** Stack-allocated slice (static slice)

@@ -9,7 +9,9 @@
 *** [[file:chapters/for-loop.org][for-loop]]
 *** [[file:chapters/switch.org][switch]]
 *** [[file:chapters/match.org][match]]
-** Array and slice
+** Slices
+*** [[file:chapters/slice-basics.org][Slice basics]]
+*** [[file:chapters/manipulate-growable-slice.org][Manipulate growable slices]]
 ** String
 *** [[file:chapters/manipulate-strings.org][Manipulate strings]]
 *** String format
