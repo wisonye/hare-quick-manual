@@ -1,0 +1,14 @@
+* How to read process arguments
+
+#+BEGIN_SRC hare
+  use os;
+  use fmt;
+
+  export fn main() void = {
+      const args_len = len(os::args);
+      fmt::printfln(">>> [ parse_argument ] - arg len: {}", args_len)!;
+      for( let index=0z; index < args_len; index +=1) {
+              fmt::printfln(">>> [ parse_argument ] - \targs[{}]: {}", index, os::args[index])!;
+      };
+  }
+#+END_SRC
