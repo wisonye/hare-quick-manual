@@ -1,0 +1,41 @@
+~sircmpwn/hare-users@lists.sr.ht
+
+Questions about `free`
+
+The following code crashes with error: `Abort: rt/malloc.ha:242:15: invalid alignment for metadata pointer (heap corruption?)`
+
+```hare
+export fn main() void = {
+	let buf: [10]str = ["AAA"...];
+	defer for( let index=0z; index < len(buf); index +=1) {
+		free(buf[index]);
+	};
+};
+```
+
+That's expected result, as `buf` is a stack-allocated array of `str` (string struct instances), shouldn't be freed at all.
+
+
+But if I change the `"AAA"` to `""`(empty string), then it works without error, why?
+
+```hare
+export fn main() void = {
+	let buf: [10]str = [""...];
+	defer for( let index=0z; index < len(buf); index +=1) {
+		free(buf[index]);
+	};
+};
+```
+
+BTW, I remember `alloc` and `free` both are the `keywords` (not callable functions) in `Hare` (tutorail says), that's the reason why the following code compiles and runs without error?:)
+
+`rt/malloc.ha:242` looks like this:
+
+```hare
+// Check for memory errors related to a given block of memory.
+fn validatemeta(m: *meta, shallow: bool) void = {
+	assert(&m.user: uintptr % ALIGN == 0,
+		"invalid alignment for metadata pointer (heap corruption?)");
+
+```
+

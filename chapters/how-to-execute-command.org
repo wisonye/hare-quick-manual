@@ -1,0 +1,71 @@
+* How to execute command
+
+=exec::cmd= - Create command to run
+=exec::start= - Start a process to execute the given command
+=exec::wait= - Wait for the given process to finish
+
+Example:
+
+#+BEGIN_SRC bash
+  use fmt;
+  use exec;
+  use strings;
+
+  //
+  //
+  //
+  fn call_swww_to_change_wallpaper(filename: str) void = {
+          const cmd_list = [
+          "swww",
+          "img",
+          "--transition-type",
+          "none",
+          filename,
+          ];
+
+          // Create command
+      let command = match (exec::cmd(
+          cmd_list[0],
+          cmd_list[1],
+          cmd_list[2],
+          cmd_list[3],
+          cmd_list[4],
+      )) {
+                  case let cmd: exec::command => yield cmd;
+                  case let err: exec::error =>
+                          fmt::printfln(">>> [ call_swww_to_change_wallpaper ] - failed to create command: {}",
+                                  exec::strerror(err))!;
+                          return;
+          };
+
+          const cmd_desc = strings::join(" ", cmd_list...);
+          defer free(cmd_desc);
+          fmt::printfln(">>> [ call_swww_to_change_wallpaper ] - command: {}", cmd_desc )!;
+
+          // Run it and wait for it to finish
+          let proc = match (exec::start(&command)){
+                  case let p: exec::process => yield p;
+                  case let err: exec::error =>
+                          fmt::printfln(">>> [ call_swww_to_change_wallpaper ] - failed to create process: {}",
+                                  exec::strerror(err))!;
+                          return;
+          };
+
+          let status = match (exec::wait(&proc)) {
+                  case let s: exec::status => yield s;
+                  case let err: exec::error =>
+                          fmt::printfln(">>> [ call_swww_to_change_wallpaper ] - failed to wait process: {}",
+                                  exec::strerror(err))!;
+                          return;
+          };
+
+          match (exec::check(&status)) {
+                  case void =>
+                          fmt::printfln(">>> [ call_swww_to_change_wallpaper ] - execute command successfully")!;
+                  case let status_result: exec::exit_status => {
+                          fmt::printfln(">>> [ call_swww_to_change_wallpaper ] - execute command failed with status code: {}",
+                                  status.status)!;
+                  };
+          };
+  };
+#+END_SRC

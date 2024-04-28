@@ -22,9 +22,9 @@
 ** 24. How to
 *** [[file:chapters/how-to-find-stdlib-path.org][Find the stdlib path]]
 *** [[file:chapters/how-to-get-byte-size.org][Get byte size]]
-*** [[file:chapters/how-to-read-process-arguments.org][Read environment variable]]
-*** Read process arguments
-*** Execute command
+*** Read environment variable
+*** [[file:chapters/how-to-read-process-arguments.org][Read process arguments]]
+*** [[file:chapters/how-to-execute-command.org][Execute command]]
 *** Handle JSON
 *** Multithreading
 *** Send HTTP request
