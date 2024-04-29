@@ -22,6 +22,7 @@
 ** 24. How to
 *** [[file:chapters/how-to-find-stdlib-path.org][Find the stdlib path]]
 *** [[file:chapters/how-to-get-byte-size.org][Get byte size]]
+*** [[file:chapters/how-to-get-random-value.org][Get random value]]
 *** Read environment variable
 *** [[file:chapters/how-to-read-process-arguments.org][Read process arguments]]
 *** [[file:chapters/how-to-execute-command.org][Execute command]]

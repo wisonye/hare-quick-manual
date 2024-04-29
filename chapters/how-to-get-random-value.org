@@ -1,0 +1,37 @@
+* How to get random value
+
+#+BEGIN_SRC hare
+  fn get_random_index(max_index: size) size = {
+          //
+          // Create seed value now's nano second part
+          //
+          const nano_second_as_seed = time::now(time::clock::MONOTONIC).nsec: u64;
+
+          //
+          // Init random by the given sedd
+          //
+          const rand = random::init(nano_second_as_seed);
+
+          //
+          // Generate the random u64 <= `max_index`
+          //
+          return random::u64n(&rand, max_index: size);
+  };
+
+  fn get_random_float() f64  = {
+          //
+          // Create seed value now's nano second part
+          //
+          const nano_second_as_seed = time::now(time::clock::MONOTONIC).nsec: u64;
+
+          //
+          // Init random by the given sedd
+          //
+          const rand = random::init(nano_second_as_seed);
+
+          //
+          // Generate the random float
+          //
+          return random::f64rand(&rand);
+  };
+#+END_SRC
