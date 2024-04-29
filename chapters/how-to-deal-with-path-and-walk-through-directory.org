@@ -1,0 +1,131 @@
+* How to deal with path and walk through directory
+
+=os= module wraps some functions related to file/path/dir from =path= module and =fs= module.
+
+** How to create and modify path
+
+=path= module defines a =buffer= type that implements the stack-allocated stack, you can push and pop to manipulate your paths.
+
+#+BEGIN_SRC hare
+  export type buffer = struct {
+          buf: [MAX]u8,
+          end: size,
+  };
+#+END_SRC
+
+Here is an example:
+
+#+BEGIN_SRC hare
+  //
+  // Create path `buffer` by calling `init`
+  //
+  let path = path::init("../../../Photos/")!;
+
+  //
+  // Push to the stack, you don't need to care about the separator
+  //
+  path::push(&path, "wallpaper")!;
+  path::push(&path, "my-favorite")!;
+  path::push(&path, "firewatch.jpg")!;
+
+  //
+  // Get back the borrowed string from `buffer`
+  //
+  const path_string = path::string(&path);
+  fmt::printfln(">>> path_string: {}", path_string)!;
+
+  //
+  // If you need expanded to fullpath, use `os::realpath`
+  //
+  const fullpath = match (os::realpath(path_string)) {
+          case let s: str => yield s;
+          case let err: fs::error =>
+                  fmt::printfln(">>> get realpath failed: {}", fs::strerror(err))!;
+                  yield "";
+  };
+  fmt::printfln(">>> fullpath: {}", fullpath)!;
+#+END_SRC
+
+Output:
+
+#+BEGIN_SRC bash
+  >>> path_string: ../../../Photos/wallpaper/my-favorite/firewatch.jpg
+  >>> fullpath: /home/wison/Photos/wallpaper/my-favorite/firewatch.jpg
+#+END_SRC
+
+
+** How to walk through the given directory
+
+#+BEGIN_SRC hare
+  //
+  // Get fullpath folder
+  //
+  const fullpath_folder = match (os::realpath(folder)) {
+          case let name: str => yield name;
+          case let err: fs::error =>
+                  fmt::printfln(">>> [ change_wallpaper_randomly ] - failed to get fullpath folder: {}",
+                          exec::strerror(err))!;
+                  return;
+  };
+
+  //
+  // Get folder iterator
+  //
+  let iterator = match (os::iter(fullpath_folder)) {
+          case let iter: *fs::iterator => yield iter;
+          case let err: fs::error =>
+                  fmt::printfln(">>> [ change_wallpaper_randomly ] - failed to get folder iterator: {}",
+                          exec::strerror(err))!;
+                  return;
+  };
+
+  //
+  // Create `filename_list` from the folder iterator
+  //
+  let filename_list: []str = alloc([], 10); // Pre-allocated 10 items capacity
+  defer strings::freeall(filename_list);
+
+  for (true) {
+          //
+          // Get back the next dire entry `(fs::dirent | void | error)`
+          //
+          const dir_entry = match (iterator.next(iterator)) {
+                  case let d: fs::dirent => yield d;
+                  case let err: fs::error =>
+                          fmt::printfln(">>> [ change_wallpaper_randomly ] - failed to get create filename list: {}",
+                                  fs::strerror(err))!;
+                          break; // Error happen, break the for loop
+                  case void => break; // Reach end of iterator, break the for loop
+          };
+
+          //
+          // Get file extention
+          //
+          const temp_name = match (path::init(dir_entry.name)) {
+                  case let b: path::buffer  => yield b;
+                  case => continue; // If failed, skip this file
+          };
+          const ext = match (path::peek_ext(&temp_name)) {
+                  case let e: str => yield e;
+                  case => continue; // If failed, skip this file
+          };
+          // fmt::printfln(">>> ext: {}", ext)!;
+
+          //
+          // Only add to `filename_list` if the ext is in the `supported_image_extension`!!!
+          //
+          for( let index=0z; index < len(supported_image_extension); index +=1) {
+                  if (ext == supported_image_extension[index]) {
+                          append(filename_list, strings::dup(dir_entry.name));
+                          break;
+                  };
+          };
+  };
+
+  //
+  // Make sure to free the folder iterator!!!
+  //
+  fs::finish(iterator);
+#+END_SRC
+
+

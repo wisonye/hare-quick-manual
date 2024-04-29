@@ -25,6 +25,7 @@
 *** [[file:chapters/how-to-get-random-value.org][Get random value]]
 *** Read environment variable
 *** [[file:chapters/how-to-read-process-arguments.org][Read process arguments]]
+*** [[file:chapters/how-to-deal-with-path-and-walk-through-directory.org][Deal with path and walk through directory]]
 *** [[file:chapters/how-to-execute-command.org][Execute command]]
 *** Handle JSON
 *** Multithreading
