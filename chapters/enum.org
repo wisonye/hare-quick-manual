@@ -1,5 +1,7 @@
 * Enum
 
+=Enum= value is able to be converted to integer.
+
 #+BEGIN_SRC hare
   type Color = enum {
           RED = 0x02, // Start from 0 by default
@@ -55,3 +57,4 @@ Output
   Color::GREEN	- value: 0x5, string: Green
   Color::VIOLET	- value: 0x7, string: Violet
 #+END_SRC
+

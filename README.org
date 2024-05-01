@@ -14,16 +14,16 @@
 *** [[file:chapters/manipulate-growable-slice.org][Manipulate growable slices]]
 ** String
 *** [[file:chapters/manipulate-strings.org][Manipulate strings]]
-*** String format
+*** [[file:chapters/string-format.org][String format]]
 ** [[file:chapters/error-handling.org][Error handling]]
 ** [[file:chapters/hare-modules.org][Hare modules]]
 ** [[file:chapters/compiler-related.org][Compiler related]]
 ** Working with C
-** 24. How to
+** How to
 *** [[file:chapters/how-to-find-stdlib-path.org][Find the stdlib path]]
 *** [[file:chapters/how-to-get-byte-size.org][Get byte size]]
 *** [[file:chapters/how-to-get-random-value.org][Get random value]]
-*** Read environment variable
+*** [[file:chapters/how-to-read-env-vars.org][Read environment variable]]
 *** [[file:chapters/how-to-read-process-arguments.org][Read process arguments]]
 *** [[file:chapters/how-to-deal-with-path-and-walk-through-directory.org][Deal with path and walk through directory]]
 *** [[file:chapters/how-to-execute-command.org][Execute command]]

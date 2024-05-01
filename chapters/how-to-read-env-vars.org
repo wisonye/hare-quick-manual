@@ -1,0 +1,23 @@
+* How to read environment variables
+
+=os::getenv(name: const str) (str | void)=
+=os::tryenv(name: const str, default: str) str=
+
+#+BEGIN_SRC hare
+  export fn main() void = {
+          //
+          // Get env var
+          //
+          const my_choice = match (os::getenv("MY_CHOICE")) {
+                  case let s: str => yield s;
+                  case void => yield "";
+          };
+          fmt::printfln(">>> env MY_CHOICE: {}", my_choice)!;
+
+          //
+          // Get env var with default value
+          //
+          const your_choice = os::tryenv("YOUR_CHOICE", "NotSetYe");
+          fmt::printfln(">>> env YOUR_CHOICE: {}", your_choice)!;
+  };
+#+END_SRC

@@ -1,0 +1,112 @@
+* String format
+
+Detail description: =haredoc fmt=
+
+In a summary:
+
+There is =formattable= type defined in =$HARE_PATH/fmt/iter.ha= that converts all data types:
+
+#+BEGIN_SRC hare
+  // Tagged union of all types which are formattable.
+  export type formattable = (...types::numeric | uintptr | str | rune | bool |
+          nullable *opaque | void);
+#+END_SRC
+
+And there is a =format_raw= function deinfed in =$HARE_PATH/usr/local/share/hare/stdlibS/fmt/print.ha= like this:
+
+#+BEGIN_SRC hare
+  fn format_raw(
+          out: io::handle,
+          arg: formattable,
+          mod: *mods,
+  ) (size | io::error) = match (arg) {
+#+END_SRC
+
+That said the ={}= placeholder in =fmt::printfln("{}", xxx)= is able to print all data types without any specific =modifier= needed, that's pretty cool!!!
+
+The rest content shows you how to do extra format control on top of the default ={}= placeholder:
+
+** Format float value with the given decimals
+
+~:f.X~: =X= is the decimals count
+
+#+BEGIN_SRC hare
+  const f1: f32 = 8.3456;
+  const d1: f64= 7.123456;
+  fmt::printfln(">>> f1: {:f.2}", f1)!;
+  fmt::printfln(">>> d1: {:f.3}", d1)!;
+#+END_SRC
+
+#+BEGIN_SRC bash
+  >>> f1: 8.35
+  >>> d1: 7.123
+#+END_SRC
+
+
+** Format binary
+
+- ~:b~
+
+- ~:b.8~
+
+    - ~b~ output integer value in binary notation
+    - ~.~ means the fill with =0=
+    - ~8~ means the width (how many chars to fill with fill char)
+
+#+BEGIN_SRC hare
+	const a = 4;
+	fmt::printfln(">>> a: 0b{:b.4}", a)!;
+	fmt::printfln(">>> a: 0b{:b.8}", a)!;
+#+END_SRC
+
+#+BEGIN_SRC bash
+  >>> a: 0b0100
+  >>> a: 0b00000100
+#+END_SRC
+
+
+** Format HEX
+
+- ~:x~ (lowercase) or ~:X~ (uppercase)
+
+- ~:X.2~: fixed width
+    - ~.~ means the fill with =0=
+    - ~2~ means the width (how many chars to fill with fill char)
+
+#+BEGIN_SRC hare
+  const a: u8= 0x0A;
+  const b: u32= 0x0123;
+
+  fmt::printfln(">>> a: 0x{:X.2}", a)!;
+  fmt::printfln(">>> b: 0x{:X.8}", b)!;
+#+END_SRC
+
+#+BEGIN_SRC bash
+  >>> a: 0x0A
+  >>> b: 0x00000123
+#+END_SRC
+
+
+** Format to the given buffer
+
+=bsprintf=
+
+#+BEGIN_SRC hare
+  const age: u8= 0x88;
+
+  let age_buffer: [20]u8 = [0x00...];
+  const age_msg = fmt::bsprintf(&age_buffer, "age in hex: 0x{:X.2}", age);
+  fmt::printfln(">>> age_msg: {}", age_msg)!;
+#+END_SRC
+
+#+BEGIN_SRC bash
+  >>> age_msg: age in hex: 0x88
+#+END_SRC
+
+If the given buffer is smaller than the format string, it will crash with error:
+
+#+BEGIN_SRC bash
+  Abort: fmt/wrappers.ha:40:46: error occurred 
+#+END_SRC
+
+But it doesn't tell you where your code caused the crash!!!
