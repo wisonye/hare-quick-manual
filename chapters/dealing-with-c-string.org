@@ -1,0 +1,59 @@
+* Dealing with C null-terminated string
+
+In =Hare=, string is NOT null-terminated, it's a struct like this defined in =$stdlib/types/classes.ha=:
+
+#+BEGIN_SRC hare
+  // A type representing the internal structure of strings, useful for low-level
+  // string manipulation.
+  export type string = struct {
+          // UTF-8 encoded octets.
+          data: nullable *[*]u8,
+
+          // The length capacity, in octets of UTF-8 data.
+          length: size,
+
+          // The allocated capacity, in octets of UTF-8 data.
+          capacity: size,
+  };
+#+END_SRC
+
+It's exactly like the growable string implementation in =C=.
+
+In =Hare=, there is a =types::c= module provides type aliases that are compatible with standard =C= builtin types and functions for working with =C= types.
+
+You can run =haredoc types::c= to see all available types and functions, here are the most useful functions when dealing with C null-terminated string:
+
+
+** Convert hare =str= to C =const char *=
+
+#+BEGIN_SRC hare
+  use types::c;
+
+  //
+  // Heap-allocated
+  //
+  const c_string = c::fromstr("hare string");
+  defer free(c_string);
+
+  //
+  // borrow from the original hare string
+  //
+  const c_string = c::unterminatedstr("hare string");
+
+  //
+  // borrow from the original hare string that ends with `\0`,
+  // it will abort if not:
+  //
+  // Abort: types/c/strings.ha:77:15: types::c::nulstr input must be NUL-terminated
+  //
+  const c_string = c::unterminatedstr("hare string");
+#+END_SRC
+ 
+
+** Convert C =const char *= to =hare =str=
+
+#+BEGIN_SRC hare
+  const c_string = c::unterminatedstr("12345");
+  const hare_string = c::tostr_unsafe(c_string);
+  fmt::printfln(">>> hare string: {}", hare_string)!;
+#+END_SRC

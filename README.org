@@ -19,6 +19,10 @@
 ** [[file:chapters/hare-modules.org][Hare modules]]
 ** [[file:chapters/compiler-related.org][Compiler related]]
 ** Working with C
+*** [[file:chapters/c-data-type.org][C data type]]
+*** [[file:chapters/dealing-with-c-string.org][Dealing with C null-terminated string]]
+*** [[file:chapters/calling-c-functions.org][Calling C functions]]
+*** [[file:chapters/c-builtin-functions-in-hare.org][C builtin funtions in Hare]]
 ** How to
 *** [[file:chapters/how-to-find-stdlib-path.org][Find the stdlib path]]
 *** [[file:chapters/how-to-get-byte-size.org][Get byte size]]

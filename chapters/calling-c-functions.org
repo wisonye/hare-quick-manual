@@ -1,0 +1,39 @@
+* Calling C functions
+
+You need to 2 things for calling any C functions:
+
+- Declare the C function signature in hare data type.
+
+- Link to the corresponding C libraries via =-L= (where to search the linking libraries)and =-l= (link to the given library name) to =hare run/build/test=.
+
+
+Example:
+
+#+BEGIN_SRC hare
+  //
+  // Declare the C function signature in hare data type.
+  //
+  @symbol("printf") fn c_printf(format: *const c::char, ...) int;
+
+  //
+  //
+  //
+  export fn main() void = {
+          const int_value = 10;
+          const float_value = 18.1234f64; // `%f` only accept `f64`!!!
+          const string_value = "Hello hare:)";
+
+          c_printf(c::unterminatedstr("int_value: %d, float_value: %.2f, string_value: %s"),
+                  int_value,
+                  float_value,
+                  c::unterminatedstr(string_value));
+  };
+#+END_SRC
+
+Then, remember to link to =libc= by using =-lc=:
+
+#+BEGIN_SRC bash
+  HAREPATH=~/hare/temp/src:/usr/local/share/hare/stdlib hare run -lc ~/hare/temp/src/main.ha
+
+  # int_value: 10, float_value: 18.12, string_value: Hello hare:)⏎ 
+#+END_SRC

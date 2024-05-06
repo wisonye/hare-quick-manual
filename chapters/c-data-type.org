@@ -1,0 +1,17 @@
+* C data type
+
+| C                     | Hare                   |
+|-----------------------+------------------------|
+| =_Bool, bool=           | =bool=                   |
+| =nullptr_t=             | =null=                   |
+| =(signed) int=          | =int=                    |
+| =size_t=                | =size=                   |
+| =unsigned int=          | =uint=                   |
+| =uintptr_t=             | =uintptr=                |
+| =va_list=               | =valist=                 |
+| =void=                  | =void, opaque=           |
+| =* void=                | =nullable *opaque=       |
+| =const char *=          | =*const types::c::char=  |
+| =const unsigned char *= | =*const types::c::uchar= |
+|                       |                        |
+

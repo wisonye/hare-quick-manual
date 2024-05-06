@@ -1,0 +1,128 @@
+* C builtin funtions in Hare
+
+=rt= (runtime) module includes a few C builtin functions.
+
+** malloc and free
+
+=export fn malloc(n: size) nullable *opaque;=
+=export fn free_(p: nullable *opaque) void;=
+
+#+BEGIN_SRC hare
+  use fmt;
+  use rt;
+
+  type Point = struct {
+          x: f32,
+          y: f32
+  };
+
+  fn create_int_on_heap(value: int) *int = {
+          // Call c version `malloc`
+          const int_ptr = rt::malloc(size(int)):* int;
+          ,*int_ptr = value;
+          return int_ptr;
+  };
+
+  fn create_point_on_heap(x: f32, y: f32) *Point = {
+          // Call c version `malloc`
+          const point_ptr = rt::malloc(size(Point)):* Point;
+
+          // (*point_ptr).x = x;
+          // (*point_ptr).y = y;
+
+          // Auto de-reference in Hare:)
+          point_ptr.x = x;
+          point_ptr.y = y;
+
+          return point_ptr;
+  };
+
+  export fn main() void = {
+          const int_value = 8888;
+
+          const int_ptr = create_int_on_heap(int_value);
+          defer rt::free_(int_ptr); // Call c version `free`
+
+          fmt::printfln(">>> int_ptr: {}, value: {}", int_ptr, *int_ptr)!;
+
+          const point_ptr = create_point_on_heap(11.111, 22.222);
+          defer rt::free_(point_ptr); // Call c version `free`
+
+          fmt::printfln(">>> point_ptr: {}, x: {}, y: {}", point_ptr, point_ptr.x, point_ptr.y)!;
+  };
+#+END_SRC
+
+
+** memcpy
+
+=export fn memmove(dest: *opaque, src: *const opaque, n: size) void;=
+=export fn memcpy(dest: *opaque, src: *const opaque, n: size) void;=
+
+#+BEGIN_SRC hare
+  type Point = struct {
+          x: f32,
+          y: f32
+  };
+
+  export fn main() void = {
+          const p1 = Point { x = 11.111, y = 22.222 };
+          fmt::printfln(">>> p1.x: {:f.2}, p1.y: {:f.2}", p1.x, p1.y)!;
+
+          const p2 = Point {...};
+          fmt::printfln(">>> p2.x: {:f.2}, p2.y: {:f.2}", p2.x, p2.y)!;
+
+          rt::memcpy(&p2, &p1, size(Point));
+          fmt::printfln(">>> p2.x: {:f.2}, p2.y: {:f.2}", p2.x, p2.y)!;
+  };
+#+END_SRC
+
+Output:
+
+#+BEGIN_SRC bash
+  >>> p1.x: 11.11, p1.y: 22.22
+  >>> p2.x: 0.00, p2.y: 0.00
+  >>> p2.x: 11.11, p2.y: 22.22
+#+END_SRC
+
+
+** memset
+
+=export fn memset(dest: *opaque, val: u8, n: size) void= 
+
+#+BEGIN_SRC hare
+  export fn main() void = {
+          const int_value = 8888;
+          const int_arr: [10]u8 = [0...];
+          print_slice(&int_arr);
+
+          rt::memset(&int_arr, 0xFF, size([10]u8));
+          print_slice(&int_arr);
+  };
+#+END_SRC
+
+Output:
+
+#+BEGIN_SRC bash
+  >>> [ print_slice ] - len: 10, value:
+  >>>	slice[0]: 0
+  >>>	slice[1]: 0
+  >>>	slice[2]: 0
+  >>>	slice[3]: 0
+  >>>	slice[4]: 0
+  >>>	slice[5]: 0
+  >>>	slice[6]: 0
+  >>>	slice[7]: 0
+  >>>	slice[8]: 0
+  >>>	slice[9]: 0
+  >>> [ print_slice ] - len: 10, value:
+  >>>	slice[0]: 255
+  >>>	slice[1]: 255
+  >>>	slice[2]: 255
+  >>>	slice[3]: 255
+  >>>	slice[4]: 255
+  >>>	slice[5]: 255
+  >>>	slice[6]: 255
+  >>>	slice[7]: 255
+  >>>	slice[8]: 255
+  >>>	slice[9]: 255
+#+END_SRC
