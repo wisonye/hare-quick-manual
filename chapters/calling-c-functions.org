@@ -6,7 +6,6 @@ You need to 2 things for calling any C functions:
 
 - Link to the corresponding C libraries via =-L= (where to search the linking libraries)and =-l= (link to the given library name) to =hare run/build/test=.
 
-
 Example:
 
 #+BEGIN_SRC hare
@@ -37,3 +36,14 @@ Then, remember to link to =libc= by using =-lc=:
 
   # int_value: 10, float_value: 18.12, string_value: Hello hare:)⏎ 
 #+END_SRC
+
+
+Pay attentions:
+
+- Linking to any C libraries will also implicitly link to =libc=, which will use a libc-oriented Hare runtime that, for example, performs memory allocations via libc’s =malloc=. This will also enable the =+libc= build tag.
+
+- It is recommended to identify the correct linker flags with =pkg-config=. =hare= does not interpret C compiler flags, so the user must take care to only add the compatible linker flags:
+
+  #+BEGIN_SRC bash
+    hare build $(pkg-config --libs-only-L --libs-only-l LIB_NAME_HERE)
+  #+END_SRC
