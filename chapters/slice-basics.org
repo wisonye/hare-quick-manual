@@ -6,7 +6,7 @@
 
 =Slice= (=[]T=) is grow-able size and runtime size known, you can treat it as a dynamic array.
 
-Here is the internal =slice= type:
+Here is the internal =slice= data type:
 
 #+BEGIN_SRC bash
   haredoc types::slice
@@ -23,7 +23,7 @@ Here is the internal =slice= type:
   # };
 #+END_SRC
 
-As you see, it's a very regular dynamic-arry/vector struct implementation.
+As you can see, it's a very regular dynamic-array/vector struct implementation.
 
 But if you create a slice from an array, the slice is non-growable, it is just another form to access the parent array!!!
 
@@ -80,6 +80,38 @@ Error output:
 
 
 If you want a growable slice, read the next chapter.
+
+
+** Slice assignment
+
+You'are able to assign multiple values to the given slice by the following syntax, it works like using the =memmove= in =C=:
+
+#+BEGIN_SRC hare
+  fn print_slice(slice: []u8) void = {
+          fmt::printfln(">>> [ print_slice ] - len: {}, value:", len(slice))!;
+          for (let index = 0z; index < len(slice); index += 1) {
+                  fmt::printfln(">>>\tslice[{}]: 0x{:X.2}", index, slice[index])!;
+
+          };
+  };
+
+  export fn main() void = {
+          const arr = [0xAAu8, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF];
+          print_slice(&arr);
+
+          //
+          // Assign `arr[1] ~ arr[3]` (3 elements) to the given values (fill with `0x11`)
+          //
+          arr[1..4] = [0x11...];
+          print_slice(&arr);
+
+          //
+          // Assign `arr[1] ~ arr[3]` (3 elements) to the given values
+          //
+          arr[1..4] = [0x11, 0x22, 0x33];
+          print_slice(&arr);
+  };
+#+END_SRC
 
 
 ** How to get back the underlying =types::slice= type
@@ -166,15 +198,15 @@ So, you can print out the array's address and slice's internal data address to p
   //
   let slice: []u8 = arr[..];
   //
-  // Try to get back the slice's data (`nullable *oqaque`)
+  // Try to get back the slice's data (`nullable *opaque`)
   //
   // let slice_interal_data = (*(&slice: *types::slice)).data;
-  let slice_interal_data = (&slice: *types::slice).data;
+  let slice_internal_data = (&slice: *types::slice).data;
 
   fmt::printfln(">>> arr address: {}", &arr)!;
   fmt::printfln(">>> slice address: {}", &slice)!;
-  fmt::printfln(">>> slice internal address: {}", slice_interal_data)!;
-  fmt::printfln(">>> arr address == slice internal address: {}", &arr == slice_interal_data)!;
+  fmt::printfln(">>> slice internal address: {}", slice_internal_data)!;
+  fmt::printfln(">>> arr address == slice internal address: {}", &arr == slice_internal_data)!;
 #+END_SRC
 
 
