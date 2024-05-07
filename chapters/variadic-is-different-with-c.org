@@ -1,0 +1,152 @@
+* =Hare= Variadic is different with =C=
+
+
+** Variadic function in =Hare=
+
+In =Hare=, a variadic function only accepts the final parameter to become a variadic parameter with the given data type!!!
+
+For example:
+
+#+BEGIN_SRC hare
+  use fmt;
+
+  fn print_strings(args: str...) void = {
+          fmt::printfln(">>> [ print_strings ] - strings len: {}", len(args))!;
+          for( let index=0z; index < len(args); index +=1) {
+                  fmt::printfln("\t{}", args[index])!;
+          };
+  };
+
+  export fn main() void = {
+          let string_list: []str = [];
+          print_strings(string_list...);
+
+          print_strings("Hello ", "from ", "hare", ":)");
+
+          string_list = ["Hey,", "it works:)"];
+          print_strings(string_list...);
+  };
+#+END_SRC
+
+
+Output:
+
+#+BEGIN_SRC bash
+  HAREPATH=./src:/usr/local/src/hare/stdlib hare run src/main.ha
+
+  # >>> [ print_strings ] - strings len: 0
+  # >>> [ print_strings ] - strings len: 4
+  #         Hello
+  #         from
+  #         hare
+  #         :)
+  # >>> [ print_strings ] - strings len: 2
+  #         Hey,
+  #         it works:) 
+#+END_SRC
+
+
+That =fn print_strings(args: str...) void= variadic parameter only can be =str= type, you can't pass another data type, the following function call wont' work!!!
+
+#+BEGIN_SRC hare
+  print_strings("Hello ", "from ", 888, ":)"); 
+#+END_SRC
+
+Error:
+
+#+BEGIN_SRC bash
+  temp/src/main.ha:31:45: error: Array members must be of a uniform type, previously seen str, but now see [iconst min=888 max=888]
+
+  31 |            print_strings("Hello ", "from ", 888, ":)");
+     |                                                ^
+
+  /home/wison/hare/temp/src/main.ha:31:30: error: Argument is not assignable to variadic parameter type
+
+  31 |            print_strings("Hello ", "from ", 888, ":)");
+     |                                 ^
+#+END_SRC
+
+
+
+** Calling =C= function with variadic parameter from =Hare=
+
+#+BEGIN_SRC hare
+  use types::c;
+
+  //
+  // C variadic parameter doesn't have a fixed data type!!!
+  //
+  @symbol("printf") fn c_print(format: *const c::char, ...) int;
+
+  fn call_c_printf() void = {
+          const int_value = 10;
+          const float_value = 123.123456f64;
+          const string_value = c::unterminatedstr("Hello from hare:)");
+
+          const fmt = c::unterminatedstr(">>> int_value: %d, float_value: %.2f, string_value: %s");
+          c_print(fmt, int_value, float_value, string_value);
+  };
+
+
+  export fn main() void = {
+          call_c_printf();
+  };
+#+END_SRC
+
+
+Output, make sure to pass the =-lc= (link to =libc= linker flag) to =hare run=:
+
+#+BEGIN_SRC bash
+  HAREPATH=./src:/usr/local/src/hare/stdlib hare run -lc src/main.ha
+
+  # >>> int_value: 10, float_value: 123.12, string_value: Hello from hare:)⏎  
+#+END_SRC
+
+
+** You CANNOT pass the =Hare= variadic paramter to =C= variadic function!!!
+
+This is not allowed, as Hare-style variadism (=type...=) and C-style variadism (=...=) are not straightforwardly compatible. They use entirely different ABIs!!!
+
+That's why the following code won't work:
+
+#+BEGIN_SRC hare
+  use types::c;
+
+  //
+  // C variadic parameter doesn't have a fixed data type!!!
+  //
+  @symbol("printf") fn c_printf(format: *const c::char, ...) int;
+
+  //
+  // Hare variadic parameter has a fixed data type!!!
+  //
+  fn c_printf_wrapper(format: str, args: fmt::field...) int = {
+      const c_fmt = c::fromstr(format);
+      defer free(c_fmt);
+
+      //
+      // You can't pass the hare-style varidic parameter to C-style variadic function!!!
+      //
+      return c_printf(c_fmt, args...);
+  };
+
+  export fn main() void = {
+          const int_value = 10;
+          const float_value = 123.123456f64;
+          const string_value = c::unterminatedstr("Hello from hare:)");
+
+          c_printf_wrapper(">>> int_value: %d, float_value: %.2f, string_value: %s",
+                  int_value,
+                  float_value,
+                  string_value);
+  };
+#+END_SRC
+
+It will crash:
+
+#+BEGIN_SRC bash
+  HAREPATH=./src:/usr/local/src/hare/stdlib hare run -lc src/main.ha
+
+  # Illegal pointer access (address not mapped to object) at address 0x30
+  # fish: Job 1, 'HAREPATH=./src:/usr/local/src/h…' terminated by signal SIGABRT (Abort)
+#+END_SRC

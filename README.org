@@ -23,6 +23,7 @@
 *** [[file:chapters/dealing-with-c-string.org][Dealing with C null-terminated string]]
 *** [[file:chapters/calling-c-functions.org][Calling C functions]]
 *** [[file:chapters/c-builtin-functions-in-hare.org][C builtin funtions in Hare]]
+*** [[file:chapters/variadic-is-different-with-c.org][Hare Variadic is different with C]]
 ** How to
 *** [[file:chapters/how-to-find-stdlib-path.org][Find the stdlib path]]
 *** [[file:chapters/how-to-get-byte-size.org][Get byte size]]
