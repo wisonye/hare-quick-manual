@@ -1,0 +1,42 @@
+* Pointer arithmetic
+
+Yes, you can do pointer arithmetic in =Hare= by converting a given pointer to =uintptr= (back to integer) then do arithmetic based on bytes, then convert back to the original pointer type:)
+
+Here is the example:
+
+#+BEGIN_SRC hare
+  export fn main() void = {
+    const arr = [1u16, 2, 3, 4, 5];
+    fmt::printfln(">>> arr address: {}", &arr)!;
+
+    //
+    // Points to the second element (first element address + size(u16))
+    //
+    let ptr: *u16 = &arr[1];
+    fmt::printfln(">>> ptr: {} ({} + {}), value points to: {}",
+        ptr,
+        &arr[0],
+        size(u16),
+        ,*ptr)!;
+
+    //
+    // `ptr: uintptr`: Convert any pointer to `uinputr` (back to integer)
+    // `+ size(u16) * 3`: Pointer arithmetic with given bytes, e.g. move 3 steps
+    // `: *u16`: Convert ptr back to the original pointer type after moving step
+    //
+    ptr = (ptr: uintptr + size(u16) * 3): *u16;
+
+    fmt::printfln(">>> ptr: {}, value points to: {}",
+        ptr,
+        ,*ptr)!;
+  };
+#+END_SRC
+
+
+Output:
+
+#+BEGIN_SRC bash
+  >>> arr address: 0x8a07d242c
+  >>> ptr: 0x8a07d242e (0x8a07d242c + 2), value points to: 2
+  >>> ptr: 0x8a07d2434, value points to: 5
+#+END_SRC
