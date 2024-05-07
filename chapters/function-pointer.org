@@ -1,0 +1,14 @@
+* Function pointer
+
+#+BEGIN_SRC hare
+  fn add(x: int, y: int) int = x + y;
+  fn sub(x: int, y: int) int = x - y;
+
+  export fn main() void = {
+          let fun_ptr: *fn(int, int) int = &add;
+          fmt::println(fun_ptr(1, 3))!;
+
+          let fun_ptr = &sub;
+          fmt::println(fun_ptr(1, 3))!;
+  };
+#+END_SRC
