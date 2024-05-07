@@ -16,7 +16,7 @@
 *** [[file:chapters/manipulate-strings.org][Manipulate strings]]
 *** [[file:chapters/string-format.org][String format]]
 ** [[file:chapters/error-handling.org][Error handling]]
-** Pointer
+** [[file:chapters/pointers.org][Pointers]]
 *** [[file:chapters/pointer-arithmetic.org][Pointer arithmetic]]
 ** [[file:chapters/hare-modules.org][Hare modules]]
 ** [[file:chapters/compiler-related.org][Compiler related]]

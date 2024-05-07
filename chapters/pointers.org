@@ -1,0 +1,66 @@
+* Pointers
+
+** Single-item pointer
+
+=*T=: single-item pointer to exactly one item.
+
+Example:
+
+#+BEGIN_SRC hare
+  const arr = [1u16, 2, 3, 4, 5];
+
+  //
+  // You can convert the pointer type to a single item pointer explicitly,
+  // as it does point to the first (single) element in the array
+  //
+  let ptr: *u16 = &arr: *u16;
+  fmt::printfln(">>> ptr[2] add: {}, value: {}", ptr, *ptr)!;
+
+  //
+  // Also, you allow to do pointer arithmetic like this, plz have
+  // a look at the `Pointer arithmetic` chapter!!!
+  //
+  ptr = (ptr: uintptr + size(u16) * 2): *u16;
+  fmt::printfln(">>> ptr[2] add: {}, value: {}", ptr, *ptr)!;
+#+END_SRC
+
+
+** Many-items pointer
+
+=*[*]T=: many-item pointer to unknown number of items.
+
+Example:
+
+  #+BEGIN_SRC hare
+    const arr = [1u16, 2, 3, 4, 5];
+    //
+    // Pointer to many item array
+    //
+    const ptr: *[*]u16 = &arr;
+    fmt::printfln(">>> arr address:\t{}", &arr)!;
+    fmt::printfln(">>> ptr[2] address:\t{}, value: {}", ptr, ptr[2])!;
+  #+END_SRC
+
+
+But you can't assign if that's a wrong pointer type:
+
+#+BEGIN_SRC hare
+    const arr = [1u16, 2, 3, 4, 5];
+    const ptr: *u16 = &arr; // Wrong pointer type!!!
+    fmt::printfln(">>> ptr[2] address:\t{}, value: {}", ptr, ptr[2])!;
+#+END_SRC
+
+
+Error:
+
+#+BEGIN_SRC bash
+  temp/src/main.ha:25:14: error: Initializer of type *const [5]u16 is not assignable to binding type const *u16
+
+  25 |		const ptr: *u16 = &arr;
+     |	             ^
+
+  /home/wison/hare/temp/src/main.ha:27:69: error: Can only index into array or slice object, but got u16
+
+  27 |		fmt::printfln(">>> ptr[2] address:\t{}, value: {}", ptr, ptr[2])!;
+     |	          
+#+END_SRC
