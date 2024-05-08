@@ -1,0 +1,65 @@
+* Struct sub-typing
+
+=A pointer to one type can be automatically cast to a pointer of another type so long as the second type appears at the beginning of the first type.=
+
+The following example show that:
+
+The first struct field has a supertype (=Point2D= in this case), which causes =*Point3D= can be converted to =*Point2D= automatically by struct sub-typing!!!
+
+
+#+BEGIN_SRC hare
+  type Point2D = struct {
+      x: f32,
+      y: f32,
+  };
+
+  type Point3D = struct {
+      //
+      // The first field has a supertype (`Point2D` in this case), which causes
+      // `*Point3D` can be converted to `*Point2D` automatically by struct
+      // sub-typing!!!
+      //
+      p: Point2D,
+      z: f32,
+  };
+
+  fn print_point(ptr: *Point2D) void = {
+      fmt::printfln(">>> 2D point.x: {:f.2}, point.y: {:f.2}", ptr.x, ptr.y)!;
+
+      //
+      // This part is weird....
+      //
+      const p3d = ptr: *Point3D;
+      fmt::printfln(">>> 3D point.x: {:f.2}, point.y: {:f.2}, point.z: {:f.2}",
+          p3d.p.x, p3d.p.y, p3d.z)!;
+  };
+
+  export fn main() void = {
+      const point = Point2D { x = 1.0, y = 2.0};
+      print_point(&point);
+
+      //
+      // `*Point3D` converts to `*Point2D` automatically by struct sub-typing
+      //
+      print_point(&Point3D { p = point, z = 3.0});
+      print_point(&Point3D { p = Point2D { x = 1.111, y = 2.222}, z = 3.333});
+  };
+#+END_SRC
+
+It works.
+
+It sounds like =Hare= invents a new way to allow users to pass any subtype which has a special first field to supertype as a =Type abstraction= solution, but no matter what, it feels a little bit weird... at least not very straightforward to be understood. Especially this part:
+
+
+#+BEGIN_SRC hare
+  fn print_point(ptr: *Point2D) void = {
+      //
+      // This part is weird....
+      //
+      const p3d = ptr: *Point3D;
+  };
+#+END_SRC
+
+This pointer conversion works, BUT it looks not safe, as it seems I have no way to check whether that =ptr= is =*Point3D= or not, but I'm still able to convert it, and =p3d.z= is =1.0= (if that's a =*Point2D= which I think should be =0=), this is not right I think...
+
+And I can't use type assertion like =if (ptr is *Point3D) { // then safe to convert to `*Point3D` };=, if I'm right, then I think this part still has room to be improved....

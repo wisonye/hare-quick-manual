@@ -19,6 +19,7 @@
 ** [[file:chapters/pointers.org][Pointers]]
 *** [[file:chapters/pointer-arithmetic.org][Pointer arithmetic]]
 *** [[file:chapters/function-pointer.org][Function pointer]]
+*** [[file:chapters/struct-sub-typing.org][struct sub-typing]]
 ** [[file:chapters/hare-modules.org][Hare modules]]
 ** [[file:chapters/compiler-related.org][Compiler related]]
 ** Working with C
