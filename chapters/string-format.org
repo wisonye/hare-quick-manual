@@ -89,7 +89,18 @@ The rest content shows you how to do extra format control on top of the default 
 
 ** Format to the given buffer
 
-=bsprintf=
+*** =bsprintf=
+
+=bsprintf=: If the given buffer is smaller than the format string, it will crash with error:
+
+#+BEGIN_SRC bash
+  Abort: fmt/wrappers.ha:40:46: error occurred 
+#+END_SRC
+
+But it doesn't tell you where your code caused the crash!!!
+
+
+Example:
 
 #+BEGIN_SRC hare
   const age: u8= 0x88;
@@ -103,10 +114,59 @@ The rest content shows you how to do extra format control on top of the default 
   >>> age_msg: age in hex: 0x88
 #+END_SRC
 
-If the given buffer is smaller than the format string, it will crash with error:
 
-#+BEGIN_SRC bash
-  Abort: fmt/wrappers.ha:40:46: error occurred 
+*** =memio::dynamic= 
+
+=memio::dynamic=: heap-allocated dynamic buffer and you must free the internal buffer by calling =io::close()=!!!
+
+Example:
+
+#+BEGIN_SRC hare
+  use fmt;
+  use io;
+  use memio;
+
+  export fn main() void = {
+          const int_value = 10;
+          const float_value = 12.1234f32;
+          const string_value = "Hello from Hare:)";
+
+          let heap_buffer: memio::stream = memio::dynamic();
+          defer io::close(&heap_buffer)!;
+
+          fmt::fprintf(&heap_buffer, ">>> int_value: {}", int_value)!;
+          fmt::fprintf(&heap_buffer, ", float_value: {:f.3}", float_value)!;
+          fmt::fprintf(&heap_buffer, ", string_value: {}", string_value)!;
+
+          fmt::printfln("{}", memio::string(&heap_buffer)!)!;
+  };
 #+END_SRC
 
-But it doesn't tell you where your code caused the crash!!!
+
+*** =memio::fixed=
+
+=memio::fixed=: stack-allocated, rely on the given buffer, you don't need to close the =stream=!
+
+But writes (e.g. =fmt::fprintf=) return an error if they would exceed the buffer's capacity.
+
+Example:
+
+#+BEGIN_SRC hare
+  use fmt;
+  use io;
+  use memio;
+
+  export fn main() void = {
+          const int_value = 10;
+          const float_value = 12.1234f32;
+          const string_value = "Hello from Hare:)";
+
+          let debug_msg_buffer: [128]u8 = [0x00...];
+          let fixed_buffer = memio::fixed(&debug_msg_buffer);
+
+          fmt::fprintf(&fixed_buffer, ">>> int_value: {}", int_value)!;
+          fmt::fprintf(&fixed_buffer, ", float_value: {:f.3}", float_value)!;
+          fmt::fprintf(&fixed_buffer, ", string_value: {}", string_value)!;
+          fmt::printfln("{}", memio::string(&fixed_buffer)!)!;
+  };
+#+END_SRC
