@@ -132,3 +132,12 @@ You have to provide your =HAREPATH= to make it work:
   # (I) [ Main > main ] - call 'do_something' done.
 #+END_SRC
 
+
+
+** Module alias
+
+#+BEGIN_SRC hare
+  use gb = gap_buffer;
+
+  // `gb::init();` instead of `gap_buffer::init();`
+#+END_SRC
