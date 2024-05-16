@@ -46,7 +46,7 @@ You can run =haredoc types::c= to see all available types and functions, here ar
   //
   // Abort: types/c/strings.ha:77:15: types::c::nulstr input must be NUL-terminated
   //
-  const c_string = c::unterminatedstr("hare string");
+  const c_string = c::nulstr("hare string\0");
 #+END_SRC
  
 
