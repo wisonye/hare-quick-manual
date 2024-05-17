@@ -26,6 +26,8 @@ You can run =haredoc types::c= to see all available types and functions, here ar
 
 ** Convert hare =str= to C =const char *=
 
+*** Heap-allocated
+
 #+BEGIN_SRC hare
   use types::c;
 
@@ -34,14 +36,23 @@ You can run =haredoc types::c= to see all available types and functions, here ar
   //
   const c_string = c::fromstr("hare string");
   defer free(c_string);
+#+END_SRC
+
+
+*** No allocation is involved, only borrow from original hare =str=
+
+DO NOT USE =c::unterminatedstr= as any given time if you want to pass converted =*const c::char= to C API in =libc=, as =c::unterminatedstr= doesn't check or add =\0= for you, that will cause bug!!! Use =c::nulstr= instead:)
+
+#+BEGIN_SRC hare
+  use types::c;
 
   //
-  // borrow from the original hare string
+  // Borrow from the original hare string
   //
   const c_string = c::unterminatedstr("hare string");
 
   //
-  // borrow from the original hare string that ends with `\0`,
+  // Borrow from the original hare string that ends with `\0`,
   // it will abort if not:
   //
   // Abort: types/c/strings.ha:77:15: types::c::nulstr input must be NUL-terminated
