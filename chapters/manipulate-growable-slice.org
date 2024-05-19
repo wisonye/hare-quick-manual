@@ -128,4 +128,155 @@ Output:
 #+END_SRC
 
 
-** Stack-allocated slice (static slice)
+** Handy arena-liked pointer pool
+
+Although you're able to use =defer= to =free= any allocated pointers, sometimes you want to let them live longer which lifetime is outside the current block scope, that's a bit of trouble in those cases, as you need to save that pointer somewhere else and call free at the right time.
+
+That's why the following =AllocatedPointerPool= comes to the rescue, as you have a centre place to save all allocated pointers and you don't need to care about passing those pointers back and forth and freeing them manually.
+
+Here is the =AllocatedPointerPool= implementation, it's very simple:
+
+#+BEGIN_SRC hare
+  // -------------------------------------------------------------------------------
+  // Allocated Pointer Pool
+  // -------------------------------------------------------------------------------
+  export type AllocatedPointerPool = struct {
+          ptrs: []nullable *opaque,
+          already_freed: bool,
+  };
+
+  //
+  // Create pointer pool with the given capacity
+  //
+  export fn init(capacity: size) AllocatedPointerPool = {
+          return AllocatedPointerPool  {
+                  ptrs = alloc([], capacity),
+                  already_freed = false,
+          };
+  };
+
+  //
+  // Free all pointers at once
+  //
+  export fn deinit(self: *const AllocatedPointerPool) void = {
+          if (self.already_freed) return;
+
+          self.already_freed = true;
+
+          //
+          // Call `free` on all ptrs
+          //
+          const length = len(self.ptrs);
+          const freed_count = 0;
+          for (let index = 0z; index < length; index += 1) {
+                  match (self.ptrs[index]) {
+                          case null => yield;
+                          case let temp_ptr: *opaque => {
+                                  free(temp_ptr);
+                                  freed_count += 1;
+                                  fmt::printfln(">>> [ AllocatedPointerPool > deinit ] - freed: {}", temp_ptr)!;
+                          };
+                  };
+          };
+
+          //
+          // Free `_ptrs` itself.
+          //
+          free(self.ptrs);
+
+          fmt::printfln(">>> [ AllocatedPointerPool > deinit ] - free {} allocated resources and itself: {}",
+                  freed_count, &self.ptrs)!;
+  };
+
+  //
+  // Add allocated pointer to the pool
+  //
+  export fn add(self: *AllocatedPointerPool, ptr: *opaque) void = {
+          append(self.ptrs, ptr);
+  };
+
+  //
+  // Debug purposes
+  //
+  export fn debug_print(self: *const AllocatedPointerPool) void = {
+          fmt::printfln(
+                  ">>> [ AllocatedPointerPool > debug_print ] - ptr slice len: {}, _ptrs: {}",
+                  len(self.ptrs), &self.ptrs)!;
+          for (let index = 0z; index < len(self.ptrs); index += 1) {
+                  fmt::printfln(">>>\t_ptrs[{}]: {}", index, self.ptrs[index])!;
+          };
+  };
+#+END_SRC
+
+
+So, here is the usage pattern:
+
+#+BEGIN_SRC hare
+  use arena = allocated_pointer_pool;
+
+  //
+  // Create `AllocatedPointerPool` at the top block scope you wanted
+  //
+  let ptr_pool = arena::init(10);
+  defer arena::deinit(&ptr_pool);
+
+  //
+  // Call `arena::add(&ptr_pool, ptr);` everywhere you needed and that's it:)
+  //
+#+END_SRC
+
+
+Example:
+
+#+BEGIN_SRC hare
+  fn allocated_on_the_heap(ptr_pool: *arena::AllocatedPointerPool) void = {
+          for( let index=0z; index < 5; index +=1) {
+                  const temp_ptr: *size = alloc(index);
+                  arena::add(ptr_pool, temp_ptr);
+          };
+  };
+
+  //
+  //
+  //
+  export fn main() void = {
+          let ptr_pool = arena::init(10);
+          defer arena::deinit(&ptr_pool);
+
+          const int_ptr: *opaque = alloc(88);
+          arena::add(&ptr_pool, int_ptr);
+
+          const f32_ptr: *opaque = alloc(123.1234f32);
+          arena::add(&ptr_pool, f32_ptr);
+
+          fmt::printfln(">>> int_ptr: {}, value: {}", int_ptr, *(int_ptr: *int))!;
+          fmt::printfln(">>> f32_ptr: {}, value: {}", f32_ptr, *(f32_ptr: *f32))!;
+
+          allocated_on_the_heap(&ptr_pool);
+
+          arena::debug_print(&ptr_pool);
+  };
+#+END_SRC
+
+Output:
+
+#+BEGIN_SRC bash
+  >>> int_ptr: 0x3363e22050a0, value: 88
+  >>> f32_ptr: 0x3363e22050b0, value: 123.1234
+  >>> [ AllocatedPointerPool > debug_print ] - ptr slice len: 7, _ptrs: 0x8a0f1f2b8
+  >>>	_ptrs[0]: 0x3363e22050a0
+  >>>	_ptrs[1]: 0x3363e22050b0
+  >>>	_ptrs[2]: 0x3363e22050c0
+  >>>	_ptrs[3]: 0x3363e22050d0
+  >>>	_ptrs[4]: 0x3363e22050e0
+  >>>	_ptrs[5]: 0x3363e22050f0
+  >>>	_ptrs[6]: 0x3363e2205100
+  >>> [ AllocatedPointerPool > deinit ] - freed: 0x3363e22050a0
+  >>> [ AllocatedPointerPool > deinit ] - freed: 0x3363e22050b0
+  >>> [ AllocatedPointerPool > deinit ] - freed: 0x3363e22050c0
+  >>> [ AllocatedPointerPool > deinit ] - freed: 0x3363e22050d0
+  >>> [ AllocatedPointerPool > deinit ] - freed: 0x3363e22050e0
+  >>> [ AllocatedPointerPool > deinit ] - freed: 0x3363e22050f0
+  >>> [ AllocatedPointerPool > deinit ] - freed: 0x3363e2205100
+  >>> [ AllocatedPointerPool > deinit ] - free 7 allocated resources and itself: 0x8a0f1f2b8
+#+END_SRC
