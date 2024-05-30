@@ -128,6 +128,72 @@ Output:
 #+END_SRC
 
 
+** Stack-allocated slice
+
+You can create a slice on top of a stack-allocated buffer but make sure to slice with =[..0]= which means slice with 0 elements, that causes the underlying =slice.length = 0= but keep the =slice.capacity= to the whole length of the given stack-allocated buffer!!!
+
+Example:
+
+#+BEGIN_SRC hare
+  use fmt;
+  use types:
+
+  def STACK_BUFFER_LEN: size = 10;
+
+  fn stack_allocated_slice() void = {
+        const stack_buffer: [STACK_BUFFER_LEN]u8 = [0x00...];
+
+        //
+        // Create a slice on top of the `stack_buffer`
+        // `..0` means slice with 0 elements, that causes the underlying `slice.length = 0`
+        // but keep the `slice.capacity = STACK_BUFFER_LEN`!!!
+        //
+        let list: []u8 = stack_buffer[..0];
+
+        //
+        // Get back the `types::slice` underlying struct fields
+        //
+        const list_data = (&list: *types::slice).data;
+        const list_len = (&list: *types::slice).length;
+        const list_cap = (&list: *types::slice).capacity;
+
+        //
+        // `stack_buffer address` and `list.data` should be the same address!!!
+        //
+        fmt::printfln(">>> stack_buffer address:\t{}, len: {}", &stack_buffer, len(stack_buffer))!;
+        fmt::printfln(">>> list.data:\t\t\t{}, list.length: {}, list.capacity: {}",
+            list_data, list_len, list_cap)!;
+
+        //
+        // `static` keyword here, which prevents Hare from re-allocating a slice
+        // if it has insufficient storage space to perform the desired operation.
+        //
+        static append(list, 10);
+        static insert(list[0], 20);
+
+        print_slice(list);
+  };
+
+  //
+  //
+  //
+  export fn main() void = {
+        stack_allocated_slice();
+  };
+#+END_SRC
+
+
+Output:
+
+#+BEGIN_SRC bash
+  >>> stack_buffer address:    0x7ffeb9679544, len: 10
+  >>> list.data:               0x7ffeb9679544, list.length: 0, list.capacity: 10
+  >>> [ print_slice ] - len: 2, value:
+  >>>	slice[0]: 20
+  >>>	slice[1]: 10
+#+END_SRC
+
+
 ** Handy arena-liked pointer pool
 
 Although you're able to use =defer= to =free= any allocated pointers, sometimes you want to let them live longer which lifetime is outside the current block scope, that's a bit of trouble in those cases, as you need to save that pointer somewhere else and call free at the right time.
