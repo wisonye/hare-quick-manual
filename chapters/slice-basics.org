@@ -135,6 +135,8 @@ For example:
 
 #+BEGIN_SRC hare
   const arr = [1u8, 2, 3, 4];
+  fmt::printfln(">>> arr address: {}", &arr)!;
+
   const slice: []u8 = arr;
 
   // This is NOT allowed!!!
@@ -153,20 +155,26 @@ But you can convert a =*[]T= back to =*types::slice=, this allows you to access 
 
 #+BEGIN_SRC hare
   const arr = [1u8, 2, 3, 4];
-  const slice: []u8 = arr;
+  fmt::printfln(">>> arr address: {}, len: {}", &arr, len(arr))!;
+
+  const slice: []u8 = arr; // Same with `arr[..];`
 
   // Convert `*[]T` to `*types::slice`
   const slice_ptr = &slice: *types::slice;
-  fmt::printfln(">>> slice - capacity: {}, len: {}, data ptr: {}",-
+  fmt::printfln(">>> slice - capacity: {}, len: {}, data ptr: {}",
          slice_ptr.capacity,
          slice_ptr.length,
          slice_ptr.data)!;
+
+  // Their addresses should be the same
+  assert(&arr == slice_ptr.data);
 #+END_SRC
 
 Output:
 
 #+BEGIN_SRC bash
-  >>> slice - capacity: 4, len: 4, data ptr: 0x797579fbe0  
+  >>> arr address: 0x7ffed1f0c504, len: 4
+  >>> slice - capacity: 4, len: 4, data ptr: 0x7ffed1f0c504
 #+END_SRC
 
 
