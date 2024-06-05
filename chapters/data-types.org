@@ -19,6 +19,7 @@
 | =f32=              | =float=                | 32-bit floating point (23-bit mantissa) IEEE-754-2008 binary32                  |
 | =f64=              | =double=               | 64-bit floating point (52-bit mantissa) IEEE-754-2008 binary64                  |
 | =bool=             | =bool=                 | true or false                                                                   |
+| =str=              |                      | String type, =types::string=                                                      |
 | =done=             |                      | an object that indicates the end of a for-each iterator loop                    |
 | =never=            |                      | use as result type of expression which are guaranteed to never return to caller |
 | =null=             | =null_t=               | NULL pointer                                                                    |
