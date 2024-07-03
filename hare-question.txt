@@ -1,41 +1,87 @@
 ~sircmpwn/hare-users@lists.sr.ht
 
-Questions about `free`
+What's the correct way to delcare extern cosntant/global variable from C header file
 
-The following code crashes with error: `Abort: rt/malloc.ha:242:15: invalid alignment for metadata pointer (heap corruption?)`
+The `ncurses.h` has the following definition for the `stdscr` extern global variable:
+
+```c
+/*
+ * Public variables.
+ *
+ * Notes:
+ *	a. ESCDELAY was an undocumented feature under AIX curses.
+ *	   It gives the ESC expire time in milliseconds.
+ *	b. ttytype is needed for backward compatibility
+ */
+#if NCURSES_REENTRANT
+
+NCURSES_WRAPPED_VAR(WINDOW *, stdscr);
+
+#define stdscr      NCURSES_PUBLIC_VAR(stdscr())
+
+#else
+
+extern NCURSES_EXPORT_VAR(WINDOW *) stdscr;
+
+#endif
+
+
+/*
+ * For reentrant code, we map the various global variables into SCREEN by
+ * using functions to access them.
+ */
+#define NCURSES_PUBLIC_VAR(name) _nc_##name
+
+#define NCURSES_WRAPPED_VAR(type,name) extern NCURSES_IMPEXP type NCURSES_PUBLIC_VAR(name)(void)
+```
+
+So, I think it just publish the `_nc_stdscr` global variable?
+
+
+Then I tried this in `src/nc/nc.ha`;
 
 ```hare
+export type WINDOW = opaque;
+
+// I remember I saw `*(WINDOW **)0` somewhere else in the source code, `NULL` is equal to `0` in C.
+export const std_screen: nullable *WINDOW = null; 
+
+export @symbol("initscr") fn initscr() *WINDOW;
+
+export @symbol ("wgetch") fn wgetch(window: const nullable *WINDOW) int;
+export fn getch() int = wgetch(std_screen);
+```
+
+Here is the `src/main.ha`:
+
+```hare
+use fmt;
+use nc;
+use types::c;
+
 export fn main() void = {
-	let buf: [10]str = ["AAA"...];
-	defer for( let index=0z; index < len(buf); index +=1) {
-		free(buf[index]);
-	};
+	const window = nc::initscr();
+	fmt::printfln(">>> window: {}", window)!;
+
+	let input_char = 0;
+	input_char = nc::getch();
+	fmt::printfln(">>> input_char: {}", input_char)!;
+
+	// input_char = nc::wgetch(window);
+	// fmt::printfln(">>> input_char: {}", input_char)!;
+
+	nc::endwin();
 };
 ```
 
-That's expected result, as `buf` is a stack-allocated array of `str` (string struct instances), shouldn't be freed at all.
-
-
-But if I change the `"AAA"` to `""`(empty string), then it works without error, why?
-
-```hare
-export fn main() void = {
-	let buf: [10]str = [""...];
-	defer for( let index=0z; index < len(buf); index +=1) {
-		free(buf[index]);
-	};
-};
+It prints the following without waiting me to press a key which doens't correct:
+```bash
+>>> window: 0x5b332c6ac2d0
+                          >>> input_char: -1
 ```
 
-BTW, I remember `alloc` and `free` both are the `keywords` (not callable functions) in `Hare` (tutorail says), that's the reason why the following code compiles and runs without error?:)
+If I call `input_char = nc::wgetch(window);` instead of calling `nc::getch()` (which use `std_screen`), then it waits me to press a key which the correct behavior.
 
-`rt/malloc.ha:242` looks like this:
+But I hope that I don't need to wrap every `XXX(void)` function/macro by adding `window: const nullable *WINDOW` and call it with the window pointer get back from `initscr()`, I don't have to if I can declare the extern `stdscr` extern stuff correctly?
 
-```hare
-// Check for memory errors related to a given block of memory.
-fn validatemeta(m: *meta, shallow: bool) void = {
-	assert(&m.user: uintptr % ALIGN == 0,
-		"invalid alignment for metadata pointer (heap corruption?)");
-
-```
 

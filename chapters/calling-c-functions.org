@@ -1,4 +1,6 @@
-* Calling C functions
+* FFI: Calling C functions
+
+** Function
 
 You need to 2 things for calling any C functions:
 
@@ -47,3 +49,14 @@ Pay attentions:
   #+BEGIN_SRC bash
     hare build $(pkg-config --libs-only-L --libs-only-l LIB_NAME_HERE)
   #+END_SRC
+
+
+** Extern global variable
+
+You can declare an extern global variable that comes from any linking libraries like this:
+
+#+BEGIN_SRC hare
+  // @symbol("EXTERN_VAR_HERE") YOUR_HARE_VAR_HERE: VAR_TYPE_HERE
+  export let @symbol("stdscr") stdscr: nullable *WINDOW;
+#+END_SRC
+
