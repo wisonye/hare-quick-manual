@@ -200,7 +200,7 @@ Error type and error tagged union must have a =!= prefix,
 
 ** =...= operator
 
-=errors= stdlib module defines all base erros and has its own =strerror= function:
+=errors= stdlib module defines all base errors and has its own =strerror= function:
 
 #+BEGIN_SRC hare
   // ...ignore

@@ -1,0 +1,296 @@
+* Manipulate datetime
+
+** Get current datetime
+
+#+BEGIN_SRC hare
+  use time::date;
+  const local_now = time::date::localnow();
+#+END_SRC
+
+
+** How to get values from a =date= instance
+
+Although, you're able to read all values from the =date= struct:
+
+#+BEGIN_SRC hare
+  export type date = struct {
+          chrono::moment,
+
+          era:         (void | int),
+          year:        (void | int),
+          month:       (void | int),
+          day:         (void | int),
+          yearday:     (void | int),
+          isoweekyear: (void | int),
+          isoweek:     (void | int),
+          week:        (void | int),
+          sundayweek:  (void | int),
+          weekday:     (void | int),
+
+          hour:        (void | int),
+          minute:      (void | int),
+          second:      (void | int),
+          nanosecond:  (void | int),
+  };
+#+END_SRC
+
+But you should still use the builtin function to avoid the unnecessary =match= case, here is an example:
+
+#+BEGIN_SRC hare
+   fn print_date_values() (io::error | void ) = {
+          const local_now = time::date::localnow();
+
+          const fmt_str = strings::concat(
+                  " [ print_date_values ] - {{",
+                  "\n\tera: {},",
+                  "\n\tyear: {},",
+                  "\n\tmonth: {},",
+                  "\n\tday: {},",
+                  "\n\tyearday: {},",
+                  "\n\tisoweekyear: {},",
+                  "\n\tisoweek: {},",
+                  "\n\tweek: {},",
+                  "\n\tsundayweek: {},",
+                  "\n\tweekday: {},",
+                  "\n\thour: {},",
+                  "\n\tminute: {},",
+                  "\n\tsecond: {},",
+                  "\n\tnanosecond: {},",
+                  "\n}}",
+          );
+          defer free(fmt_str);
+          fmt::printfln(
+                  fmt_str,
+                  time::date::era(&local_now),
+                  time::date::year(&local_now),
+                  time::date::month(&local_now),
+                  time::date::day(&local_now),
+                  time::date::yearday(&local_now),
+                  time::date::isoweekyear(&local_now),
+                  time::date::isoweek(&local_now),
+                  time::date::week(&local_now),
+                  time::date::sundayweek(&local_now),
+                  time::date::weekday(&local_now),
+                  time::date::hour(&local_now),
+                  time::date::minute(&local_now),
+                  time::date::second(&local_now),
+                  time::date::nanosecond(&local_now),
+          )!;
+  };
+
+#+END_SRC
+
+Output:
+
+#+BEGIN_SRC bash
+  >>> formatted datetime: Monday
+  [ print_date_values ] - {
+          era: 1,
+          year: 2024,
+          month: 8,
+          day: 12,
+          yearday: 225,
+          isoweekyear: 2024,
+          isoweek: 33,
+          week: 33,
+          sundayweek: 32,
+          weekday: 0,
+          hour: 16,
+          minute: 41,
+          second: 15,
+          nanosecond: 987461170,
+  }
+#+END_SRC
+
+
+** Format datetime
+
+You can find all supported datetime formats in this file (the comment of =export fn format=):
+
+=/usr/local/src/hare/stdlib/time/date/format.ha=
+
+Here are the useful format examples:
+
+| Format string     | description           | Output example      |
+|-------------------+-----------------------+---------------------|
+| ="%F"=              | full date             | 2024-08-12          |
+| ="%Y-%m-%d"=        | full date             | 2024-08-12          |
+| ="%T"=              | 24 hours time         | 13:19:26            |
+| ="%H:%M:%S"=        | 24 hours time         | 13:19:26            |
+| ="%F %T"=           | full datetime         | 2024-08-12 13:19:26 |
+| =time::date::STAMP= | full datetime         | 2024-08-12 13:19:26 |
+| ="%I:%M %p"=        | short time with AM/PM | 01:33 PM            |
+| ="%b"=              | month                 | Jan                 |
+| ="%B"=              | month full name       | January             |
+| =%b %d %H:%M=       | file datetime         | Aug 12 09:39        |
+| ="%L"=              | timezone identifier   | Europe/Amsterdam    |
+| ="%z"=              | timezone offset       | +0100               |
+| ="%Z"=              | timezone abbr         | NZST                |
+|                   |                       |                     |
+
+
+Example:
+
+#+BEGIN_SRC hare
+  fn print_format_date() (io::error | void) = {
+          const local_now = time::date::localnow();
+          let buffer: [256]u8 = [0x00...];
+
+          // >>> full datetime: 2024-08-12 16:43:32
+          const full_datetime_fmt_str = "%F %T";
+          let date_str = time::date::bsformat(
+                  &buffer,
+                  full_datetime_fmt_str,
+                  &local_now
+          )?;
+          fmt::printfln(">>> full datetime: {}", date_str)!;
+
+          // >>> timezone name: /usr/share/zoneinfo/Pacific/Auckland
+          const timezone_name_fmt_str = "%L";
+          date_str = time::date::bsformat(
+                  &buffer,
+                  timezone_name_fmt_str,
+                  &local_now
+          )?;
+          fmt::printfln(">>> timezone name: {}", date_str)!;
+
+          // >>> short time with AM/PM: 04:43 PM
+          const short_time_with_pm_fmt_str = "%I:%M %p";
+          date_str = time::date::bsformat(
+                  &buffer,
+                  short_time_with_pm_fmt_str,
+                  &local_now
+          )?;
+          fmt::printfln(">>> short time with AM/PM: {}", date_str)!;
+
+          // >>> Weekday full: Monday
+          def WEEKDAYS: [_]str = [
+                  "Monday",
+                  "Tuesday",
+                  "Wednesday",
+                  "Thursday",
+                  "Friday",
+                  "Saturday",
+                  "Sunday",
+          ];
+
+          // >>> Weekday short: Mon
+          def WEEKDAYS_SHORT: [_]str = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+          fmt::printfln(">>> weekday full: {}", WEEKDAYS[local_now.weekday: int] )!;
+          fmt::printfln(">>> weekday short: {}", WEEKDAYS_SHORT[local_now.weekday: int] )!;
+
+          // >>> file datetime: Aug 12 16:48
+          const file_datetime_fmt_str = "%b %d %H:%M";
+          date_str = time::date::bsformat(
+                  &buffer,
+                  file_datetime_fmt_str,
+                  &local_now
+          )?;
+          fmt::printfln(">>> file datetime: {}", date_str)!;
+
+          // >>> email: Mon, 12 Aug 2024 16:56:42 +1200 NZST
+          const email_fmt_str = "%a, %d %b %Y %H:%M:%S %z %Z";
+          date_str = time::date::bsformat(
+                  &buffer,
+                  time::date::STAMP,
+                  &local_now
+          )?;
+          fmt::printfln(">>> email: {}", date_str)!;
+
+          // >>> rfc3339/gps: 2024-08-12T17:01:27+1200
+          const rfc3339_fmt_str = "%Y-%m-%dT%H:%M:%S%z";
+          date_str = time::date::bsformat(
+                  &buffer,
+                  time::date::RFC3339,
+                  &local_now
+          )?;
+          fmt::printfln(">>> email: {}", date_str)!;
+  };
+#+END_SRC
+
+
+
+
+** Get datetime from nanoseconds
+
+#+BEGIN_SRC hare
+  use time;
+  use time::date;
+  use time::chrono;
+  use time::date;
+
+  fn print_datetime_from_nanosecs() void = {
+          // Original nanosecond value
+          const test_file_modified_time: i64 = 1723415184981656547;
+
+          // Get back `instant`
+          const file_instant: time::instant = time::from_unix(
+                  test_file_modified_time / 1_000_000_000
+          );
+
+          // Get back `datetime`
+          const file_datetime: time::date::date = time::date::from_instant(
+                  chrono::LOCAL,
+                  file_instant
+          );
+
+          // Format and print
+          const file_datetime_fmt_str = "%b %d %H:%M";
+          const buffer: [256]u8 = [0x00u8...];
+          const date_str = match(time::date::bsformat(
+                  &buffer,
+                  file_datetime_fmt_str,
+                  &file_datetime
+          )){
+                  case let s: str => yield s;
+                  case => yield "";
+          };
+          fmt::printfln(
+                  ">>> [ print_datetime_from_nanosecs ] - test_file_modified_time: {}, file time: {}",
+                  test_file_modified_time,
+                  date_str
+          )!;
+  };
+#+END_SRC
+
+
+** Get datetime from string
+
+#+BEGIN_SRC hare
+  use time;
+  use time::date;
+  use time::chrono;
+  use time::date;
+
+  fn print_datetime_from_string() void = {
+          const test_str = "2024-08-12 10:26:24";
+
+          // Get back `datetime`
+          const datetime_value = match(time::date::from_str(
+                  time::date::STAMP,
+                  test_str,
+                  chrono::LOCAL,
+          )){
+                  case let d: time::date::date => yield d;
+                  case time::date::parsefail => yield time::date::localnow();
+                  case time::date::insufficient => yield time::date::localnow();
+                  case time::date::invalid => yield time::date::localnow();
+          };
+
+          // Format and print
+          const buffer: [256]u8 = [0x00u8...];
+          const datetime_str = match(time::date::bsformat(
+                  &buffer,
+                  time::date::STAMP,
+                  &datetime_value
+          )){
+                  case let s: str => yield s;
+                  case => yield "";
+          };
+          fmt::printfln(
+                  ">>> [ print_datetime_from_string ] - test_str: {}, datetime_str: {}",
+                  test_str,
+                  datetime_str
+          )!;
+  };
+#+END_SRC
