@@ -335,7 +335,7 @@ So, build the object file and print the =color_to_string= from the symbol table:
 #+END_SRC
 
 
-And now, build the binaryand print the =color_to_string= from the symbol table:
+And now, build the binary and print the =color_to_string= from the symbol table:
 
 #+BEGIN_SRC bash
   hare build -o out/main_bin src/main.ha
