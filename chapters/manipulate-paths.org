@@ -1,0 +1,51 @@
+* Manipulating paths
+
+The =path= module uses the following =buffer= to manipulate the path like a stack data structure:
+
+#+BEGIN_SRC hare
+  export type buffer = struct {
+  	buf: [MAX]u8,
+  	end: size,
+  };
+#+END_SRC
+
+So, you can use the following functions to handle the path:
+
+=path::init= - Create stack-allocated path buffers
+=alloc(path::init())= - Create head-allocated path buffer
+
+=set= - Use the given =str...= to overwrite the path
+=push/peek/pop= - Stack functions to manipulate the given path
+=parent= - Get back the parent path
+=string= - Get back the string form of the path
+
+
+Example:
+
+#+BEGIN_SRC hare
+  use path;
+
+  export fn main() void = {
+
+  	// Stack allocated
+  	// let buf = path::init()!;
+  	let s_buf: path::buffer = path::init("~", "temp")!;
+  	path::push(&s_buf, "test")!;
+  	fmt::printfln(">>> stack allocated path: {}", path::string(&s_buf))!;
+
+  	// Statically allocated
+  	// static let buf = path::buffer { ... };
+  	// path::set(&buf)!;
+
+  	// Heap allocated
+  	let h_buf: *path::buffer = alloc(path::init()!);
+  	defer free(h_buf);
+
+  	path::push(h_buf, "/", "home", "wison", "temp")!;
+  	fmt::printfln(
+  		">>> heap allocated path: {}, parent path: {}",
+  		path::string(h_buf),
+  		path::parent(h_buf): str
+  	)!;
+  };
+#+END_SRC

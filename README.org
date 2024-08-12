@@ -22,6 +22,8 @@
 *** [[file:chapters/struct-sub-typing.org][struct sub-typing]]
 ** Datetime
 *** [[file:chapters/manipulate-datetime.org][Manipulate datetime]]
+** File system
+*** [[file:chapters/manipulate-paths.org][Manipulating paths]]
 ** [[file:chapters/hare-modules.org][Hare modules]]
 ** [[file:chapters/compiler-related.org][Compiler related]]
 ** Working with C
