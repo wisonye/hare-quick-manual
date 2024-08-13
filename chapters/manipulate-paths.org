@@ -1,5 +1,7 @@
 * Manipulating paths
 
+** Overview
+
 The =path= module uses the following =buffer= to manipulate the path like a stack data structure:
 
 #+BEGIN_SRC hare
@@ -17,7 +19,7 @@ So, you can use the following functions to handle the path:
 =set= - Use the given =str...= to overwrite the path
 =push/peek/pop= - Stack functions to manipulate the given path
 =parent= - Get back the parent path
-=string= - Get back the string form of the path
+=string= - Get back the string form of the path (borrow from the original buffer), you SHOULD use =strings::dup()= to make a copy to avoid another =path::init()= to overwrite the string value!!!
 
 
 Example:
@@ -48,4 +50,82 @@ Example:
   		path::parent(h_buf): str
   	)!;
   };
+#+END_SRC
+
+
+** How to resolve path with =$HOME= or =~= or =.= or =..=
+
+*** Resolve =*$HOME*= or =~=
+
+You can't find any functions to expand =$HOME= or =~= automatically, you have read it from env var like this:
+
+#+BEGIN_SRC hare
+  fn get_user_home_path() str = {
+  	return match (os::getenv("HOME")) {
+  		case let s: str => yield s;
+  		case void => yield "";
+  	};
+  };
+#+END_SRC
+
+
+*** Resolve =~= or =.= or =..=
+
+You got 2 options:
+
+**** If you're able to create =path= via =path::init=
+
+#+BEGIN_SRC hare
+  use path;
+  use strings;
+
+  const path_buf = path::init(
+  	get_user_home_path(),
+  	"temp",
+  	"..",
+  	"Downloads"
+  )!;
+  const temp_path = strings::dup(path::string(&path_buf));
+  defer free(temp_path);
+  fmt::printfln(">>> temp_path: {}", temp_path)!;
+#+END_SRC
+
+Output:
+
+#+BEGIN_SRC bash
+  >>> temp_path: /home/wison/Downloads 
+#+END_SRC
+
+
+
+**** If you only got a string path
+
+Use =os::realpath= or =os::resolve=, both of them use =os::cwd= as the start point and the difference is that:
+
+| Function     | Handle case                                                 | Yes or No |
+|--------------+-------------------------------------------------------------+-----------|
+| =os::realpath= | handle symlinks                                             | NO        |
+|              | handle absolute path                                        | YES       |
+|              | Error if path is invalid (e.g. =File or directory not found=) | YES       |
+|              |                                                             |           |
+| =os::resolve=  | handle symlinks                                             | YES       |
+|              | handle absolute path                                        | NO        |
+|              | Error if path is invalid (it ignores errors)                | NO        |
+|              |                                                             |           |
+
+Example:
+
+#+BEGIN_SRC hare
+  // const real_path = match (os::realpath("/home/wison/temp/../Downloads/")) {
+  const real_path = match (os::realpath("src/utils/..")) {
+  	case let s: str => yield s;
+  	case let err: fs::error => {
+  		fmt::printfln(">>> Failed to get realpath: {}", fs::strerror(err))!;
+  		yield "";
+  	};
+  };
+  fmt::printfln(">>> real_path: {}", real_path)!;
+
+  const absolute_path = os::resolve("./src/utils");
+  fmt::printfln(">>> absolute_path: {}", absolute_path)!;
 #+END_SRC
