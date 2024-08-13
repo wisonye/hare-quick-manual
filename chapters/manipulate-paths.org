@@ -129,3 +129,100 @@ Example:
   const absolute_path = os::resolve("./src/utils");
   fmt::printfln(">>> absolute_path: {}", absolute_path)!;
 #+END_SRC
+
+
+** How to walk through directory
+
+Here is the pattern to walk through the given directory:
+
+#+BEGIN_SRC hare
+  //
+  // Get back the iterator
+  //
+  let iter: *fs::iterator = os::iter(dir)?;
+  defer fs::finish(iter);
+
+  //
+  // Loop for it
+  //
+  for (true) match (fs::next(iter)) {
+  	// Reach the end
+  	case done => break;
+
+  	// Get directory entry
+  	case let entry: fs::dirent =>
+  		if (entry.name == "." || entry.name == "..") continue;
+          // do something you want
+
+  	// Error happen on the current entry
+  	case let err: fs::error => {
+  		fmt::printfln(
+  			"\n\t{{ Iterate failed: {}}}",
+  			fs::strerror(err)
+  		)!;
+  	};
+  };
+#+END_SRC
+
+
+Full example:
+
+#+BEGIN_SRC hare
+  use fmt;
+  use strings;
+  use path;
+  use os;
+  use fs;
+
+  fn get_user_home_path() str = {
+  	return match (os::getenv("HOME")) {
+  		case let s: str => yield s;
+  		case void => yield "";
+  	};
+  };
+
+  fn walk_through_directory(dir: str) (fs::error | void) =  {
+  	let iter: *fs::iterator = os::iter(dir)?;
+  	defer fs::finish(iter);
+
+  	fmt::printfln(">>> [ walk_through_directory ] - dir: {}, content: [", dir)!;
+  	for (true) match (fs::next(iter)) {
+  		case done => {
+  			fmt::printfln("]")!;
+  			break;
+  		};
+  		case let entry: fs::dirent =>
+  			if (entry.name == "." || entry.name == "..") continue;
+
+  			fmt::printfln(
+  				"\t{{ name: {}, is_dir: {}, }}",
+  				//
+  				// You should do `strings::dup(entry.name);` if
+  				// you want to keep it longer!!!
+  				//
+  				entry.name,
+  				fs::isdir(entry.ftype),
+  			)!;
+  		case let err: fs::error => {
+  			fmt::printfln(
+  				"\n\t{{ Iterate failed: {}}}",
+  				fs::strerror(err)
+  			)!;
+  		};
+  	};
+  };
+
+  //
+  //
+  //
+  export fn main() void = {
+  	const path_buf = path::init(
+  		get_user_home_path(),
+  		"temp",
+  	)!;
+  	const temp_path = strings::dup(path::string(&path_buf));
+  	defer free(temp_path);
+
+  	walk_through_directory(temp_path)!;
+  };
+#+END_SRC
